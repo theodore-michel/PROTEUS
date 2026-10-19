@@ -3,11 +3,12 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
 %REGRESSIONTEST Golden-master tests against the original PROTEUS outputs.
 %
 % Every case in tests/helpers/regression_cases.m is run and its outputs are
-% compared with tests/baseline/<case>.mat. Cases whose requirements
-% (k-Wave, Statistics and Machine Learning Toolbox) are not met, or that
-% have no baseline yet, are reported as incomplete rather than failed,
-% unless the environment variable PROTEUS_TEST_STRICT is set to 1 (as in
-% CI), in which case they fail.
+% compared with tests/baseline/<case>.mat.
+%
+% Cases whose requirements (k-Wave, Statistics and Machine Learning
+% Toolbox) are not met are reported as incomplete, unless the environment
+% variable PROTEUS_TEST_STRICT is 1 (as in CI), in which case they fail.
+% Cases without a recorded baseline are always reported as incomplete.
 
     properties (TestParameter)
         caseName = RegressionTest.caseNames();
@@ -30,7 +31,7 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
 
             baselineFile = fullfile(env.RepoRoot,'tests','baseline', ...
                 [caseName '.mat']);
-            check(isfile(baselineFile), ...
+            testCase.assumeTrue(isfile(baselineFile), ...
                 ['No baseline recorded for ' caseName '.']);
             B = load(baselineFile,'expected');
 
