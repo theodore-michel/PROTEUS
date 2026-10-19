@@ -23,6 +23,7 @@ add('simulation_domain',     @case_simulation_domain,     {}, 1e-10);
 add('grid_and_transducer',   @case_grid_and_transducer,   {}, 1e-10);
 add('microbubble_sensor',    @case_microbubble_sensor,    {}, 1e-10);
 add('bubble_mass_source',    @case_bubble_mass_source,    {'kWave'}, 1e-6);
+add('homogeneous_propagation', @case_homogeneous_propagation, {'kWave'}, 1e-5);
 add('das_matrix',            @case_das_matrix,            {}, 1e-10);
 add('mesh_voxelisation',     @case_mesh_voxelisation,     {}, 0);
 
@@ -176,6 +177,30 @@ sensed_p = [1; 0.5; 2] * p;
 radii    = [1.5e-6; 2e-6; 2.5e-6];
 out.mass_source = compute_bubble_mass_source( ...
     sensed_p, radii, kgrid, S.Medium, Microbubble, S.Transmit);
+end
+
+function out = case_homogeneous_propagation(~)
+% Microbubble-to-sensor propagation in the homogeneous medium
+% approximation (used by hybrid_simulator), with and without gridding of
+% the distances.
+stream = RandStream('mt19937ar','Seed',5);
+Nsrc = 4; Nsens = 30; Nt = 300;
+kgrid.dt = 1/40e6;
+kgrid.Nt = Nt;
+medium.density     = 1000 + 10*rand(stream,4,4,4);
+medium.sound_speed = 1540 + 5*rand(stream,4,4,4);
+medium.alpha_coeff = 0.75*ones(4,4,4);
+medium.alpha_power = 1.5*ones(4,4,4);
+source.points = 1e-3*rand(stream,Nsrc,3);
+t = (0:Nt-1)*kgrid.dt;
+source.mass_source = single(sin(2*pi*3e6*t).*exp(-((t-1e-6)/4e-7).^2) ...
+    .*(1:Nsrc)');
+sensor.points = 1e-3*(rand(stream,Nsens,3) + [5 0 0]);
+run_param.DATA_CAST = 'single';
+run_param.gridded = false;
+out.direct  = run_simulation_homogeneous(run_param, kgrid, medium, source, sensor);
+run_param.gridded = true;
+out.gridded = run_simulation_homogeneous(run_param, kgrid, medium, source, sensor);
 end
 
 function out = case_das_matrix(~)
