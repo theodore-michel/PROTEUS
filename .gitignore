@@ -10,8 +10,10 @@
 # Third-party dependencies installed locally (k-Wave, vtkToolbox, ...)
 /external/
 
-# Local, per-user configuration
+# Local, per-user configuration (PATHS.mat is the deprecated format)
 /proteus_local_paths.m
+/PATHS.mat
+/PATHS.mat.test-backup
 
 # Flow geometry data: only the reference geometries' metadata and preview
 # images are tracked. Downloaded/generated data (VTU, STL, MAT) and any
