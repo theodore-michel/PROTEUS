@@ -9,6 +9,8 @@
 
 # Third-party dependencies installed locally (k-Wave, vtkToolbox, ...)
 /external/
+# k-Wave installations from earlier PROTEUS versions
+/k-wave-toolbox-version-*/
 
 # Local, per-user configuration (PATHS.mat is the deprecated format)
 /proteus_local_paths.m

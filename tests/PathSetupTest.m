@@ -43,6 +43,11 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
             testCase.verifyError(@path_setup, 'path_setup:missingConfig');
         end
 
+        function nonTextValueErrors(testCase)
+            testCase.useKWaveVersion('1.4.1', 'PATHS_LOCAL.ResultsPath = 3;');
+            testCase.verifyError(@path_setup, 'path_setup:invalidConfig');
+        end
+
         function unknownFieldErrors(testCase)
             testCase.useKWaveVersion('1.4.1', 'PATHS_LOCAL.NotAPath = ''x'';');
             testCase.verifyError(@path_setup, 'path_setup:unknownField');

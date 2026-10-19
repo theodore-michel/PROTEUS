@@ -8,7 +8,7 @@ Link to the article: https://ieeexplore.ieee.org/document/10597664
 
 ## System requirements
 
-- MATLAB R2019b or later is required (the test suite and CI use R2025a), with the following toolboxes:
+- MATLAB R2021a or later is required (the test suite and CI use R2025a), with the following toolboxes:
   - Signal Processing Toolbox (required)
   - Statistics and Machine Learning Toolbox (required: tissue inhomogeneity in `define_medium`)
   - Parallel Computing Toolbox (optional: GPU simulations and parallel microbubble batches)
@@ -32,7 +32,7 @@ Link to the article: https://ieeexplore.ieee.org/document/10597664
 ### k-Wave
 1. Install k-Wave 1.4.1 in `external/k-wave` (this folder is ignored by git). Either run, from the repository root in MATLAB:
    ```matlab
-   setup_proteus(InstallKWave=true)
+   setup_proteus('InstallKWave',true)
    ```
    or clone it yourself:
    ```bash
@@ -72,7 +72,7 @@ The output of Musubi is in VTU format. You need the vtkToolbox to convert VTU da
 ### Custom installation
 We recommend to install the software components (such as k-Wave) in the default locations. To use other locations, copy `proteus_local_paths.template.m` to `proteus_local_paths.m` (ignored by git) and fill in the full paths of the components you installed elsewhere. Empty paths use the default location. Alternatively, set the environment variable `PROTEUS_LOCAL_PATHS` to the full path of such a file.
 
-**Note:** custom paths stored in `PATHS.mat` (the format used by earlier versions) are still read, with a deprecation warning, when no `proteus_local_paths.m` exists. `PATHS.mat` is no longer part of the repository.
+**Note:** custom paths stored in `PATHS.mat` (the format used by earlier versions) are still read, with a deprecation warning, when no `proteus_local_paths.m` exists. `PATHS.mat` is no longer part of the repository: if you customised it, copy your paths to `proteus_local_paths.m` (or move `PATHS.mat` aside) **before** pulling this version, otherwise git reports a conflict on `PATHS.mat`.
 
 ## Simulation setup
 

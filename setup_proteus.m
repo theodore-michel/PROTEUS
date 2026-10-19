@@ -4,7 +4,7 @@ function PATHS = setup_proteus(options)
 % SETUP_PROTEUS() checks all dependencies, prints a report, and adds the
 % PROTEUS modules and k-Wave to the MATLAB path for this session.
 %
-% SETUP_PROTEUS(InstallKWave=true) first downloads k-Wave 1.4.1 from
+% SETUP_PROTEUS('InstallKWave',true) first downloads k-Wave 1.4.1 from
 % GitHub (https://github.com/ucl-bug/k-wave) into external/k-wave if it is
 % not installed yet. The k-Wave C++/CUDA binaries are not included; get
 % them from http://www.k-wave.org/download.php (see README.md).
@@ -103,6 +103,11 @@ url = sprintf('https://github.com/ucl-bug/k-wave/archive/refs/tags/v%s.zip', ...
     kWaveVersion);
 target = fullfile(root,'external');
 if ~isfolder(target); mkdir(target); end
+if isfolder(fullfile(target,'k-wave'))
+    error(['%s exists but does not contain k-Wave/. Remove it and run ' ...
+        'setup_proteus(''InstallKWave'',true) again.'], ...
+        fullfile(target,'k-wave'))
+end
 fprintf('Downloading k-Wave %s from %s ...\n', kWaveVersion, url);
 zipFile = websave(fullfile(tempdir,'k-wave.zip'), url);
 cleanup = onCleanup(@() delete(zipFile));

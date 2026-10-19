@@ -181,10 +181,25 @@ end
 end
 
 
-function PATHS_LOCAL = run_paths_file(file)
-% Run a paths definition script, which must define the struct PATHS_LOCAL.
+function PATHS_LOCAL = run_paths_file(file__)
+% Evaluate a paths definition file, which must define the struct
+% PATHS_LOCAL. The file content is evaluated (rather than run) so that any
+% file name works, and in this separate workspace so that it cannot
+% interfere with the variables of path_setup.
 PATHS_LOCAL = struct();
-run(file);
+eval(fileread(file__));
+if ~isstruct(PATHS_LOCAL)
+    error('path_setup:invalidConfig', ...
+        'PATHS_LOCAL in %s must be a struct.', file__)
+end
+names = fieldnames(PATHS_LOCAL);
+for n = 1:numel(names)
+    value = PATHS_LOCAL.(names{n});
+    if ~(ischar(value) || (isstring(value) && isscalar(value)))
+        error('path_setup:invalidConfig', ...
+            'PATHS_LOCAL.%s in %s must be text.', names{n}, file__)
+    end
+end
 end
 
 
