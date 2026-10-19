@@ -54,8 +54,11 @@ elseif isnumeric(expected) && ~isempty(expected)
         [location ': non-finite values differ']);
     scale = max(abs(e(finite)), [], 'all');
     if isempty(scale); scale = 0; end
+    relErr = max(abs(a(finite) - e(finite)), [], 'all')/max(scale, realmin);
     testCase.verifyEqual(a(finite), e(finite), ...
-        'AbsTol', relTol*scale + eps(scale), location);
+        'AbsTol', relTol*scale + eps(scale), ...
+        sprintf('%s: max error %.3g relative to max |value| (tolerance %.3g)', ...
+        location, relErr, relTol));
 
 else
     testCase.verifyEqual(actual, expected, location);
