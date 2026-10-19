@@ -14,15 +14,21 @@ function cases = regression_cases()
 
 cases = struct('name',{},'fcn',{},'requires',{},'relTol',{});
 
-add('default_settings',      @case_default_settings,      {}, 1e-10);
-add('transducer_catalogue',  @case_transducer_catalogue,  {}, 1e-10);
-add('transmit_signals',      @case_transmit_signals,      {}, 1e-10);
+% Tolerances: 1e-10 for closed-form computations. Cases that include the
+% Butterworth (IIR) impulse response estimate use 1e-6: across platforms
+% (macOS arm64 vs Linux x86-64, same release) it differs by ~2e-8. The
+% microbubble ODE solution (adaptive step size) differs by ~6e-5, hence
+% 1e-3 for bubble_mass_source.
+
+add('default_settings',      @case_default_settings,      {}, 1e-6);
+add('transducer_catalogue',  @case_transducer_catalogue,  {}, 1e-6);
+add('transmit_signals',      @case_transmit_signals,      {}, 1e-6);
 add('transmit_delays',       @case_transmit_delays,       {}, 1e-10);
 add('medium_and_bubbles',    @case_medium_and_bubbles,    {}, 1e-10);
 add('simulation_domain',     @case_simulation_domain,     {}, 1e-10);
-add('grid_and_transducer',   @case_grid_and_transducer,   {}, 1e-10);
+add('grid_and_transducer',   @case_grid_and_transducer,   {}, 1e-6);
 add('microbubble_sensor',    @case_microbubble_sensor,    {}, 1e-10);
-add('bubble_mass_source',    @case_bubble_mass_source,    {'kWave'}, 1e-6);
+add('bubble_mass_source',    @case_bubble_mass_source,    {'kWave'}, 1e-3);
 add('homogeneous_propagation', @case_homogeneous_propagation, {'kWave'}, 1e-5);
 add('das_matrix',            @case_das_matrix,            {}, 1e-10);
 add('mesh_voxelisation',     @case_mesh_voxelisation,     {}, 0);
