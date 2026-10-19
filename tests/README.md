@@ -19,5 +19,7 @@ results = runProteusTests(ReportFolder="test-results"); % + JUnit/coverage
 
 Requirements: MATLAB with the Signal Processing Toolbox. Cases running
 full simulations additionally need k-Wave (in `external/k-wave/k-Wave` or
-`PROTEUS_KWAVE_PATH`) and the Statistics and Machine Learning Toolbox; they
-are skipped (reported as *incomplete*) when these are missing.
+`PROTEUS_KWAVE_PATH`); they are skipped (reported as *incomplete*) when it
+is missing. `TruncatedNormalTest` compares PROTEUS's base-MATLAB
+truncated-normal sampler with the Statistics and Machine Learning Toolbox
+and is skipped when that toolbox is not installed (CI installs it).

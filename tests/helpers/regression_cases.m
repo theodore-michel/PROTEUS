@@ -28,11 +28,11 @@ add('das_matrix',            @case_das_matrix,            {}, 1e-10);
 add('mesh_voxelisation',     @case_mesh_voxelisation,     {}, 0);
 
 add('rf_hybrid_standard',    @case_rf_hybrid_standard, ...
-    {'kWave','Statistics'}, 1e-4);
+    {'kWave'}, 1e-4);
 add('rf_full_pulse_inversion', @case_rf_full_pulse_inversion, ...
-    {'kWave','Statistics'}, 1e-4);
+    {'kWave'}, 1e-4);
 add('pressure_field',        @case_pressure_field, ...
-    {'kWave','Statistics'}, 1e-4);
+    {'kWave'}, 1e-4);
 
     function add(name, fcn, requires, relTol)
         cases(end+1) = struct('name',name,'fcn',fcn, ...

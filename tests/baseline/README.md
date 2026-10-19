@@ -16,9 +16,11 @@ generate_baseline()                       % all cases whose requirements are met
 generate_baseline({'rf_hybrid_standard'}) % selected cases
 ```
 
-Cases that need k-Wave and the Statistics and Machine Learning Toolbox
-(`rf_*`, `pressure_field`) are skipped when those are unavailable; their
-baseline files are added once recorded.
+Cases that need k-Wave (`rf_*`, `pressure_field`,
+`homogeneous_propagation`, `bubble_mass_source`) are skipped when it is
+unavailable. The end-to-end baselines were recorded with the original
+`define_medium`, which used the Statistics and Machine Learning Toolbox;
+its base-MATLAB replacement reproduces them bit for bit.
 
 An intentional change of behaviour (a bug fix, a new default) must update
 the affected baseline in the same commit, and the commit message must say

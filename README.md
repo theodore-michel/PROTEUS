@@ -10,7 +10,6 @@ Link to the article: https://ieeexplore.ieee.org/document/10597664
 
 - MATLAB R2021a or later is required (the test suite and CI use R2025a), with the following toolboxes:
   - Signal Processing Toolbox (required)
-  - Statistics and Machine Learning Toolbox (required: tissue inhomogeneity in `define_medium`)
   - Parallel Computing Toolbox (optional: GPU simulations and parallel microbubble batches)
 - [k-Wave](https://github.com/ucl-bug/k-wave) version **1.4.1** (1.4.x accepted; older versions are rejected).
 - The simulator was created and tested on Windows and Linux platforms. The simulator can also run on macOS, but the k-Wave binaries for accelerated simulation need to be compiled from the C++ source code. For Windows and Linux, the compiled binaries are readily available (see [Installation of the simulator](#installation-of-the-simulator)).

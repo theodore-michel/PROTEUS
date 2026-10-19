@@ -5,9 +5,9 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
 % Every case in tests/helpers/regression_cases.m is run and its outputs are
 % compared with tests/baseline/<case>.mat.
 %
-% Cases whose requirements (k-Wave, Statistics and Machine Learning
-% Toolbox) are not met are reported as incomplete, unless the environment
-% variable PROTEUS_TEST_STRICT is 1 (as in CI), in which case they fail.
+% Cases whose requirements (k-Wave) are not met are reported as
+% incomplete, unless the environment variable PROTEUS_TEST_STRICT is 1 (as
+% in CI), in which case they fail.
 % Cases without a recorded baseline are always reported as incomplete.
 
     properties (TestParameter)

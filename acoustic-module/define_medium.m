@@ -37,12 +37,11 @@ Nx = Grid.Nx; Ny = Grid.Ny; Nz = Grid.Nz;
 
 % Normal distribution truncated at +/-cutoff standard deviations:
 cutoff = Medium.InhomogeneityCutoff;
-pd = truncate(makedist('Normal'),-cutoff,cutoff);
 
 % Make the speed of sound and density inhomogeneous to generate a linear
 % scatterer background:
 background_map   = 1 + Medium.Inhomogeneity*...
-                   random(pd,[Nx, Ny, Nz]);
+                   random_truncated_normal(cutoff,[Nx, Ny, Nz]);
                
 %==========================================================================
 % Background tissue maps
@@ -122,3 +121,4 @@ for i = 1:3
 end
 
 end
+
