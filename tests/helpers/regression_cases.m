@@ -63,13 +63,14 @@ for k = 1:numel(types)
     T.ImpulseResponseType = 'Estimate';
     T.SamplingRate = 250e6;
     T = estimate_impulse_response(T);
+    T = reference_transducer(T);
     out.(matlab.lang.makeValidName(types{k})) = T;
     clear T
 end
 end
 
 function out = case_transmit_signals(~)
-Transducer = reset_transducer();
+Transducer = reference_transducer(reset_transducer());
 variants = { ...
     'three_level',   'Three-level',     'Rectangular', 2; ...
     'cos_rect',      'Cosine envelope', 'Rectangular', 3; ...
@@ -87,7 +88,7 @@ end
 
 function out = case_transmit_delays(~)
 Medium     = reset_medium();
-Transducer = reset_transducer();
+Transducer = reference_transducer(reset_transducer());
 Transducer.Configuration = 'Linear';
 Transmit   = reset_transmit(Transducer);
 foci   = [Inf  Inf  -20e-3  -20e-3  30e-3];
@@ -236,7 +237,7 @@ end
 %==========================================================================
 function out = case_rf_hybrid_standard(env)
 S = make_tiny_settings(env.PATHS);
-out = run_rf_case(env, S, 'rf_hybrid_standard');
+out = run_rf_simulation(env, S, 'rf_hybrid_standard');
 end
 
 function out = case_rf_full_pulse_inversion(env)
@@ -245,7 +246,7 @@ S.SimulationParameters.HybridSimulation = false;
 S.Acquisition.PulsingScheme  = 'Pulse inversion';
 S.Acquisition.NumberOfPulses = 2;
 S.Acquisition.NumberOfFrames = 1;
-out = run_rf_case(env, S, 'rf_full_pulse_inversion');
+out = run_rf_simulation(env, S, 'rf_full_pulse_inversion');
 end
 
 function out = case_pressure_field(env)
@@ -269,28 +270,4 @@ c    = S.Medium.SpeedOfSound;
 f0   = S.Transmit.CenterFrequency;
 ppwl = S.SimulationParameters.PointsPerWavelength;
 S.SimulationParameters.GridSize = c/(f0*ppwl); % as in write_to_file
-end
-
-function write_settings(S, P, file)
-write_to_file(S.Microbubble, S.SimulationParameters, S.Geometry, ...
-    S.Transducer, S.Acquisition, S.Medium, S.Transmit, P, file);
-end
-
-function out = run_rf_case(env, S, name)
-P = env.PATHS;
-settingsFile = fullfile(P.SettingsPath,[name '.mat']);
-write_settings(S, P, settingsFile);
-write_synthetic_ground_truth(fullfile(P.GroundTruthPath,name), S, 1);
-rng(0,'twister'); % define_medium draws a random scatterer background
-main_RF(settingsFile, name, name);
-resultDir = fullfile(P.ResultsPath, name);
-files = dir(fullfile(resultDir,'Frame_*.mat'));
-for k = 1:numel(files)
-    F = load(fullfile(resultDir,files(k).name),'RF','dt');
-    out.RF{k} = F.RF;
-    out.dt    = F.dt;
-end
-M = load(fullfile(resultDir,'medium.mat'),'medium');
-out.medium_sound_speed = M.medium.sound_speed;
-out.medium_density     = M.medium.density;
 end
