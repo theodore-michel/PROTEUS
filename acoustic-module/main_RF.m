@@ -75,7 +75,7 @@ if Acquisition.Continue
     Medium.Save = false; % No need to save the medium again
 else
     disp('Creating k-Wave medium ...')
-    [medium, vessel_grid] = define_medium(Grid, Medium, Geometry);
+    [medium, vessel_grid] = define_medium(Grid, Medium, Geometry, Transducer);
 end
 
 % Save the k-Wave medium

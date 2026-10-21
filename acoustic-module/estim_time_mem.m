@@ -23,6 +23,9 @@ B_max = 2;
 
 if isfield(source,'ux')
     input = numel(source.ux) + param.max_mb * num_steps(2);
+    if isfield(source,'uy')
+        input = input + numel(source.uy);   % curved arrays
+    end
     output = size(source.ux, 1);
 else
     input = numel(source.p) + param.max_mb * num_steps(2);

@@ -66,7 +66,7 @@ run_param.PML = Grid.PML;
 
 % Define the k-Wave medium:
 disp('Creating k-Wave medium ...')
-[medium, vessel_grid] = define_medium(Grid, Medium, Geometry);
+[medium, vessel_grid] = define_medium(Grid, Medium, Geometry, Transducer);
 
 % Save the k-Wave medium
 if Medium.Save

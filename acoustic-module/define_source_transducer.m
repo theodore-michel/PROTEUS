@@ -16,18 +16,43 @@ function source = define_source_transducer(Transducer, Transmit, ...
 p = Transmit.PressureSignal;
 M = length(p);
 
+% The velocity source of a curved array is normal to its surface. Lateral
+% weights of the velocity source (zero for a flat transducer):
+curved = isfield(Transducer,'Configuration') && ...
+    strcmp(Transducer.Configuration,'Curved');
+if curved
+    [nx, ny] = surface_normals(Transducer);
+end
+
 % If Transducer.SourceType is defined, compensate for the effect of the
 % staggered k-Wave grid. See Table 2.1 on p. 14 of the k-Wave manual
 % (Manual Version 1.1, August 27, 2016). 
 % http://www.k-wave.org/manual/k-wave_user_manual_1.1.pdf
 if isfield(Transducer,'SourceType') && ...
         strcmp(Transducer.SourceType,'dipole')
-    
-    Transducer.integration_points(:,:,1) = ...
+
+    TransducerX = Transducer;
+    TransducerX.integration_points(:,:,1) = ...
         Transducer.integration_points(:,:,1) - Grid.dx/2;
 
     [source_weights, source_mask_idx] = ...
-        recompute_source_weights(Transducer,Grid);
+        recompute_source_weights(TransducerX,Grid);
+
+    if curved
+        % The lateral velocity is staggered along y:
+        TransducerY = Transducer;
+        TransducerY.integration_points(:,:,2) = ...
+            Transducer.integration_points(:,:,2) - Grid.dy/2;
+
+        [source_weights_y, source_mask_idx_y] = ...
+            recompute_source_weights(TransducerY,Grid);
+
+        [source_weights, source_weights_y, source_mask_idx] = ...
+            merge_masks(source_weights, source_mask_idx, ...
+            source_weights_y, source_mask_idx_y);
+    end
+elseif curved
+    source_weights_y = source_weights;
 end
 
 if isfield(Transducer,'SourceType') && ...
@@ -92,7 +117,12 @@ if strcmp(Transducer.SourceType,'dipole')
 
     % Multiply the spatial delta function with the velocity source signals
     % of point sources.
-    source.ux = source_weights * (pressure_source.*weights)/Z;
+    if curved
+        source.ux = source_weights   * (pressure_source.*weights.*nx)/Z;
+        source.uy = source_weights_y * (pressure_source.*weights.*ny)/Z;
+    else
+        source.ux = source_weights * (pressure_source.*weights)/Z;
+    end
 else
     source.p_mask = zeros(Grid.Nx, Grid.Ny, Grid.Nz, 'logical');
     source.p_mask(source_mask_idx) = 1;
@@ -111,5 +141,34 @@ function [source_weights, source_mask_idx] = ...
 
 source_weights  = transpose(sensor_weights);
 source_mask_idx = find(logical(sensor.mask));
+
+end
+
+function [nx, ny] = surface_normals(Transducer)
+% Axial and lateral components of the outward normal of a curved array at
+% each integration point (column arrays).
+
+El = get_element_geometry(Transducer);
+x = Transducer.integration_points(:,:,1);
+y = Transducer.integration_points(:,:,2);
+phi = atan2(y(:), x(:) - El.Center);
+nx = cos(phi);
+ny = sin(phi);
+
+end
+
+function [Wx, Wy, idx] = merge_masks(Wx, idx_x, Wy, idx_y)
+% Express two source weight matrices (Nmask-by-Npoints) on the union of
+% their source masks.
+
+idx = union(idx_x, idx_y);
+[~, rows_x] = ismember(idx_x, idx);
+[~, rows_y] = ismember(idx_y, idx);
+
+Npoints = size(Wx,2);
+[i, j, v] = find(Wx);
+Wx = sparse(rows_x(i), j, v, numel(idx), Npoints);
+[i, j, v] = find(Wy);
+Wy = sparse(rows_y(i), j, v, numel(idx), Npoints);
 
 end

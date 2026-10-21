@@ -1,4 +1,4 @@
-function [medium, vessel] = define_medium(Grid, Medium, Geometry)
+function [medium, vessel] = define_medium(Grid, Medium, Geometry, Transducer)
 %DEFINE_MEDIUM returns a k-Wave medium struct (a voxel-based representation
 %of the acoustic properties of the medium) based on the grid properties in
 %Grid and the medium properties in Medium.
@@ -9,6 +9,12 @@ function [medium, vessel] = define_medium(Grid, Medium, Geometry)
 %
 % [medium, vessel] = DEFINE_MEDIUM(Grid, Medium, Geometry) returns the
 % variables medium and vessel.
+%
+% [medium, vessel] = DEFINE_MEDIUM(Grid, Medium, Geometry, Transducer) also
+% removes the scatterer background behind the surface of a curved array
+% (Transducer.Configuration = 'Curved'), inside its circle of curvature.
+% This region represents the coupling medium. For other transducers the
+% fourth argument has no effect.
 %
 % medium is a struct with fields:
 % - sound_speed
@@ -42,6 +48,15 @@ cutoff = Medium.InhomogeneityCutoff;
 % scatterer background:
 background_map   = 1 + Medium.Inhomogeneity*...
                    random_truncated_normal(cutoff,[Nx, Ny, Nz]);
+
+% No scatterers in the coupling region behind a curved array:
+if nargin >= 4 && isfield(Transducer,'Configuration') && ...
+        strcmp(Transducer.Configuration,'Curved')
+    El = get_element_geometry(Transducer);
+    coupling = (Grid.x(:) - El.Center).^2 + ...
+        reshape(Grid.y,1,[]).^2 <= El.Radius^2;
+    background_map(repmat(coupling,[1 1 Nz])) = 1;
+end
                
 %==========================================================================
 % Background tissue maps
