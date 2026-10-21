@@ -126,7 +126,8 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
                 D.TransducerSurface(4*N-3,2));
             % A diverging wave widens the beam projection:
             W = 2*El.Radius*sin(El.ThetaMax);
-            testCase.verifyGreaterThan(range(D.TransducerProjection(:,2)), W);
+            testCase.verifyGreaterThan(max(D.TransducerProjection(:,2)) - ...
+                min(D.TransducerProjection(:,2)), W);
         end
 
         function couplingRegionHasNoScatterers(testCase)
