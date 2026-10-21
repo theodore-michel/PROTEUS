@@ -12,7 +12,8 @@ function S = make_default_settings(PATHS, geometryFolder, transducerMode)
 % S = MAKE_DEFAULT_SETTINGS(PATHS, geometryFolder, transducerMode) with
 % transducerMode 'reference' (default) uses the default transducer as in
 % the reference code (see reference_transducer), and with 'current' the
-% default transducer of this version (calibrated P4-1).
+% default transducer of this version (with the calibrated impulse
+% response if Transducer-models/P4-1.mat exists).
 
 if nargin < 2
     geometryFolder = 'renal_tree';

@@ -15,27 +15,45 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
     end
 
     methods (Test, TestTags = {'Fast'})
-        function p41KeepsCatalogueValuesWithCalibratedResponse(testCase)
-            T.Type = 'P4-1';
-            T = get_transducer_properties(T);
-            % Original catalogue values (reference code):
+        function p41KeepsCatalogueValuesAndEstimate(testCase)
+            % No P4-1 model file until a calibration measurement exists:
+            % original catalogue values and estimated impulse response.
+            T = reset_transducer();
             testCase.verifyEqual([T.BandwidthLow T.BandwidthHigh ...
                 T.CenterFrequency], [1.5e6 3.5e6 2.5e6]);
             testCase.verifyEqual([T.NumberOfElements T.Pitch ...
                 T.ElementWidth T.ElementHeight T.ElevationFocus], ...
                 [96 0.295e-3 0.245e-3 16e-3 110e-3]);
             testCase.verifyEqual(T.Radius, 0);
-            % Calibrated one-way impulse response (Verasonics format):
-            M = load(fullfile(testCase.Root,'Transducer-models','P4-1.mat'));
+            testCase.verifyEqual(T.calibrated, 0);
+            testCase.verifyEqual(T.ImpulseResponseType, 'Estimate');
+            testCase.verifyEqual(T.SamplingRate, 250e6);
+            E = estimate_impulse_response(T);
+            testCase.verifyEqual(T.TransmitImpulseResponse, ...
+                E.TransmitImpulseResponse);
+            % Same as the reference code apart from the new fields:
+            testCase.verifyEqual(rmfield(T,{'calibrated','Radius'}), ...
+                reference_transducer(T));
+        end
+
+        function verasonicsFormatHasUnitGain(testCase)
+            folder = testCase.modelFolder();
+            Trans.IR1wy = [0 0.25 0.5 0.25 0]'; %#ok<STRNU> % unit DC gain
+            save(fullfile(folder,'P4-1.mat'),'Trans');
+            T.Type = 'P4-1';
+            T = get_transducer_properties(T);
+            T = load_transducer_model(T, folder);
             testCase.verifyEqual(T.ImpulseResponseType, 'Calibrated');
             testCase.verifyEqual(T.calibrated, 1);
             testCase.verifyEqual(T.SamplingRate, 250e6);
-            testCase.verifyEqual(T.TransmitImpulseResponse, M.Trans.IR1wy(:)'*250e6);
-            testCase.verifyEqual(T.ReceiveImpulseResponse,  M.Trans.IR1wy(:)'*250e6);
-            % Unit gain, as the estimated impulse response:
-            gain = @(T) max(abs(fft(T.TransmitImpulseResponse,2^16)))/T.SamplingRate;
-            testCase.verifyEqual(gain(T), 1, 'RelTol', 0.01);
-            testCase.verifyEqual(gain(reference_transducer(T)), 1, 'RelTol', 0.01);
+            testCase.verifyEqual(T.TransmitImpulseResponse, ...
+                [0 0.25 0.5 0.25 0]*250e6);
+            testCase.verifyEqual(T.ReceiveImpulseResponse, ...
+                T.TransmitImpulseResponse);
+            gain = max(abs(fft(T.TransmitImpulseResponse)))/T.SamplingRate;
+            testCase.verifyEqual(gain, 1, 'RelTol', 1e-12);
+            % Geometry and band stay as in the catalogue:
+            testCase.verifyEqual(T.CenterFrequency, 2.5e6);
         end
 
         function c16dGeometryComesFromModelFile(testCase)
@@ -66,7 +84,7 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
         end
 
         function catalogueWithoutModelIsEstimated(testCase)
-            for type = {'L22-14v','9L-D','RC6gV'}
+            for type = {'P4-1','L22-14v','9L-D','RC6gV'}
                 T.Type = type{1};
                 T = get_transducer_properties(T);
                 testCase.verifyEqual(T.ImpulseResponseType, 'Estimate', type{1});
@@ -74,17 +92,6 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
                 testCase.verifyEqual(T.Radius, 0, type{1});
                 clear T
             end
-        end
-
-        function guiDefaultIsCalibratedP41(testCase)
-            T = reset_transducer();
-            testCase.verifyEqual(T.Type, 'P4-1');
-            testCase.verifyEqual(T.ImpulseResponseType, 'Calibrated');
-            Tx = reset_transmit(T);
-            testCase.verifyEqual(Tx.CenterFrequency, 2.5e6);
-            testCase.verifyTrue(all(isfinite(Tx.PressureSignal)));
-            testCase.verifyEqual(min(Tx.PressureSignal), -Tx.AcousticPressure, ...
-                'RelTol', 1e-12);
         end
 
         function proteusFormatWithOwnImpulseResponses(testCase)

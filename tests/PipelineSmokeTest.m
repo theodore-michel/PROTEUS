@@ -1,7 +1,7 @@
 classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
         PipelineSmokeTest < matlab.unittest.TestCase
 %PIPELINESMOKETEST End-to-end runs of features without a reference
-%baseline: a curved array and the calibrated default transducer, through
+%baseline: a curved array and calibrated impulse responses, through
 %main_RF, main_pressure_field and the delay-and-sum beamformers.
 %
 % These runs check that the pipeline completes and gives finite, non-zero
@@ -56,10 +56,18 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
             end
         end
 
-        function calibratedDefaultTransducerRF(testCase)
+        function calibratedLinearArrayRF(testCase)
+            % Linear array with calibrated impulse responses (those of the
+            % C1-6D model file) and the default transducer otherwise.
             env = testCase.getSharedTestFixtures('ProteusTestEnvironment');
             S = make_tiny_settings(env.PATHS, 'current');
-            testCase.assertEqual(S.Transducer.ImpulseResponseType, 'Calibrated');
+            C.Type = 'C1-6D'; C = get_transducer_properties(C);
+            for f = {'TransmitImpulseResponse','ReceiveImpulseResponse', ...
+                    'SamplingRate','ImpulseResponseType','calibrated'}
+                S.Transducer.(f{1}) = C.(f{1});
+            end
+            S.Transmit = reset_transmit(S.Transducer);
+            S = update_derived_settings(S);
             [out, resultDir, settingsFile] = run_rf_simulation(env, S, ...
                 'smoke_calibrated_rf');
             testCase.verifyRFIsValid(out, S);
