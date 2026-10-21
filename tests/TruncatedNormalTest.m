@@ -2,30 +2,25 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
         TruncatedNormalTest < matlab.unittest.TestCase
 %TRUNCATEDNORMALTEST random_truncated_normal (base MATLAB) must reproduce
 %the Statistics and Machine Learning Toolbox draw used by the original
-%define_medium.
+%define_medium, random(truncate(makedist('Normal'),-c,c),sz).
+%
+% The toolbox draws are stored in tests/baseline/truncated_normal.mat
+% (recorded with tests/tools/record_truncated_normal_reference.m), so the
+% toolbox is not needed to run this test.
 
     properties (TestParameter)
-        seed   = {0, 3, 42};
+        reference = TruncatedNormalTest.referenceDraws();
         cutoff = {1, 2, 2.5, 3};
-        sz     = {[7 11 13], [64 64 64]};
     end
 
     methods (Test, TestTags = {'Fast'})
-        function matchesToolboxBitForBit(testCase, seed, cutoff, sz)
-            testCase.assumeTrue(~isempty(ver('stats')) && ...
-                license('test','Statistics_Toolbox'), ...
-                'Statistics and Machine Learning Toolbox not available.');
+        function matchesToolboxBitForBit(testCase, reference)
             testCase.addTeardown(@rng, rng);
-
-            pd = truncate(makedist('Normal'), -cutoff, cutoff);
-            rng(seed,'twister'); expected = random(pd, sz);
-            rng(seed,'twister'); actual   = random_truncated_normal(cutoff, sz);
-
-            testCase.verifyEqual(actual, expected);
+            rng(reference.seed,'twister');
+            actual = random_truncated_normal(reference.cutoff, reference.size);
+            testCase.verifyEqual(actual, reference.x);
             % Same number of draws from the global stream:
-            rng(seed,'twister'); random(pd, sz); next1 = rand;
-            rng(seed,'twister'); random_truncated_normal(cutoff, sz); next2 = rand;
-            testCase.verifyEqual(next2, next1);
+            testCase.verifyEqual(rand, reference.next);
         end
 
         function infiniteCutoffIsUntruncated(testCase)
@@ -48,6 +43,21 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
             x = random_truncated_normal(cutoff, [100 100 10]);
             testCase.verifyLessThanOrEqual(max(abs(x(:))), cutoff);
             testCase.verifyEqual(mean(x(:)), 0, 'AbsTol', 0.02);
+        end
+    end
+
+    methods (Static, Access = private)
+        function draws = referenceDraws()
+            here = fileparts(mfilename('fullpath'));
+            B = load(fullfile(here,'baseline','truncated_normal.mat'),'cases');
+            draws = struct();
+            for k = 1:numel(B.cases)
+                c = B.cases(k);
+                name = sprintf('seed%d_cutoff%s_%s', c.seed, ...
+                    strrep(num2str(c.cutoff),'.','p'), ...
+                    strjoin(string(c.size),'x'));
+                draws.(name) = c;
+            end
         end
     end
 end

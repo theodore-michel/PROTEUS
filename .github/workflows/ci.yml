@@ -37,9 +37,11 @@ jobs:
         with:
           release: ${{ matrix.release }}
           cache: true
+          # Only the toolboxes PROTEUS requires, so that CI fails on any
+          # new dependency (the Statistics toolbox draws are stored in
+          # tests/baseline/truncated_normal.mat):
           products: >
             Signal_Processing_Toolbox
-            Statistics_and_Machine_Learning_Toolbox
 
       - name: Run tests
         uses: matlab-actions/run-command@v2

@@ -25,3 +25,10 @@ its base-MATLAB replacement reproduces them bit for bit.
 An intentional change of behaviour (a bug fix, a new default) must update
 the affected baseline in the same commit, and the commit message must say
 why.
+
+`truncated_normal.mat` is not a regression case: it holds draws of the
+Statistics and Machine Learning Toolbox (`random(truncate(makedist(...)))`,
+as in the original `define_medium`) for `TruncatedNormalTest`, recorded with
+`tests/tools/record_truncated_normal_reference.m`. With it, the tests (and
+CI) run without the toolbox.
+
