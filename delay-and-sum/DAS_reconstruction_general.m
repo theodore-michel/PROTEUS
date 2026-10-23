@@ -1,9 +1,11 @@
-function [IMG,z,x] = DAS_reconstruction_general(folder,filename_parameters)
+function [IMG,x,y] = DAS_reconstruction_general(folder,filename_parameters)
 %DAS_RECONSTRUCTION_GENERAL Delay-and-sum reconstruction for linear and
 %curved arrays, with steering and focusing.
 %
-% [IMG,z,x] = DAS_RECONSTRUCTION_GENERAL(folder,filename_parameters) has
-% the same interface as DAS_reconstruction and can replace it. It uses
+% [IMG,x,y] = DAS_RECONSTRUCTION_GENERAL(folder,filename_parameters) has
+% the same interface as DAS_reconstruction and can replace it: IMG is
+% Nx-by-Ny-by-Nframes, with x the axial and y the lateral pixel
+% coordinates (PROTEUS convention). It uses
 % initialize_das_parameters and compute_das_matrix_general, which are
 % under test against compute_das_matrix (tests/DelayAndSumTest.m).
 % Differences with DAS_reconstruction: pixel size lambda/4 instead of
@@ -30,7 +32,7 @@ Nframes = size(RF,3); % Number of frames
 t = recon.t;
 c = recon.c;
 x = recon.x;
-z = recon.z;
+y = recon.y;
 
 %==========================================================================
 % TIME GAIN COMPENSATION (TGC)
@@ -64,8 +66,8 @@ disp('Applying DAS matrix')
 IMG = full(M_DAS*RF);
 
 disp('Reshaping image data array')
-% Reshape image into an Nx-by-Ny-by-Nframes array:
-IMG = reshape(IMG, [length(x) length(z) Nframes]);
+% Reshape image into an Nx-by-Ny-by-Nframes (axial-by-lateral) array:
+IMG = reshape(IMG, [length(x) length(y) Nframes]);
 
 %==========================================================================
 % DEMODULATION AND LOG COMPRESSION

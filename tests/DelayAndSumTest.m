@@ -2,6 +2,10 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
         DelayAndSumTest < matlab.unittest.TestCase
 %DELAYANDSUMTEST The general beamformer (compute_das_matrix_general) against
 %the reference beamformer (compute_das_matrix) and the transmit delays.
+%
+% Coordinates: x axial (depth), y lateral (PROTEUS convention). The
+% reference matrix orders its pixels lateral first, the general one axial
+% first (image = reshape(M*RF, Nx, Ny)).
 
     properties (TestParameter)
         Nelem = {8, 9};             % even and odd number of elements
@@ -16,22 +20,23 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
 
     methods (Test, TestTags = {'Fast'})
         function planeWaveMatchesReferenceExactly(testCase, Nelem)
-            [t, x, z, x_el, recon, tr] = testCase.linear_case(Nelem);
-            M0 = compute_das_matrix(t, x, z, x_el, testCase.c, testCase.Fs, Inf);
+            [t, x, y, y_el, recon, tr] = testCase.linear_case(Nelem);
+            M0 = compute_das_matrix(t, y, x, y_el, testCase.c, testCase.Fs, Inf);
             M1 = compute_das_matrix_general(recon, tr, ...
                 struct('focus', Inf, 'steer', 0));
-            testCase.verifyEqual(M1, M0);
+            testCase.verifyEqual(M1(lateral_first(x, y),:), M0);
         end
 
         function divergingWaveMatchesReferenceWithinOneSample(testCase, Nelem)
             % The reference starts the diverging wave at distance F from
             % the virtual source, the general beamformer at the closest
             % element (which coincides for an odd number of elements).
-            [t, x, z, x_el, recon, tr] = testCase.linear_case(Nelem);
+            [t, x, y, y_el, recon, tr] = testCase.linear_case(Nelem);
             F = 10e-3;
-            M0 = compute_das_matrix(t, x, z, x_el, testCase.c, testCase.Fs, -F);
+            M0 = compute_das_matrix(t, y, x, y_el, testCase.c, testCase.Fs, -F);
             M1 = compute_das_matrix_general(recon, tr, ...
                 struct('focus', -F, 'steer', 0));
+            M1 = M1(lateral_first(x, y),:);
             % Same (pixel, element) pairs, sample index within one:
             A0 = pixel_element_sample(M0, numel(t));
             A1 = pixel_element_sample(M1, numel(t));
@@ -57,16 +62,16 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
                 Tx.LateralFocus = cases{k,2}; Tx.Angle = cases{k,3};
                 Tx = compute_delays(Tx, T, M);
                 El = get_element_geometry(T);
-                tr = struct('x_el', El.y', 'z_el', El.x', 'center', El.Center);
+                tr = struct('x_el', El.x', 'y_el', El.y', 'center', El.Center);
                 tx = struct('focus', Tx.LateralFocus, ...
                     'steer', deg2rad(Tx.Angle));
-                d = das_transmit_distance(El.y, El.x, tr, tx);
+                d = das_transmit_distance(El.x, El.y, tr, tx);
                 testCase.verifyEqual(d'/testCase.c, Tx.Delays, ...
                     'AbsTol', 1e-14, sprintf('case %d', k));
 
                 % Apodization does not change the time origin:
                 tx.apod = double(El.y' > 0);
-                testCase.verifyEqual(das_transmit_distance(El.y, El.x, ...
+                testCase.verifyEqual(das_transmit_distance(El.x, El.y, ...
                     tr, tx), d, sprintf('case %d, apodized', k));
             end
         end
@@ -98,33 +103,34 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
                 C16, Inf, 0, [10e-3 45e-3]; ...
                 C16, Inf, 8, [-8e-3 40e-3]; ...
                 C16, 50e-3, 5, [ 3e-3 35e-3]};
+            % Scatterer positions are given as [lateral axial] above.
             Fs = 100e6; c = testCase.c;
             for k = 1:size(cases,1)
                 T = cases{k,1};
                 Tx.LateralFocus = cases{k,2}; Tx.Angle = cases{k,3};
                 Tx = compute_delays(Tx, T, M);
                 El = get_element_geometry(T);
-                S = cases{k,4};   % [lateral axial]
-                r = hypot(El.y' - S(1), El.x' - S(2)); % element-scatterer
+                S = fliplr(cases{k,4});   % [axial lateral]
+                r = hypot(El.x' - S(1), El.y' - S(2)); % element-scatterer
                 t_tx = min(Tx.Delays + r/c);
                 t_echo = t_tx + r/c;                    % 1-by-Nelem
                 t = (0:round(2.5*max(t_echo)*Fs))/Fs;
                 RF = exp(-((t' - t_echo)/30e-9).^2);   % Nt-by-Nelem
                 pix = 0.05e-3;
                 recon = struct('x', S(1) + (-20:20)*pix, ...
-                    'z', S(2) + (-20:20)*pix, 'c', c, 't', t, 'Fs', Fs, ...
+                    'y', S(2) + (-20:20)*pix, 'c', c, 't', t, 'Fs', Fs, ...
                     'alpha_th', pi/3 - (El.Radius < Inf)*pi/6, ...
                     'apodization', 'cosine');
-                tr = struct('x_el', El.y', 'z_el', El.x', ...
+                tr = struct('x_el', El.x', 'y_el', El.y', ...
                     'azimuth', El.theta', 'center', El.Center, ...
                     'radius', El.Radius);
                 tx = struct('focus', Tx.LateralFocus, ...
                     'steer', deg2rad(Tx.Angle));
                 IMG = reshape(compute_das_matrix_general(recon, tr, tx)*RF(:), ...
-                    numel(recon.x), numel(recon.z));
+                    numel(recon.x), numel(recon.y));
                 [~, i] = max(IMG(:));
-                [ix, iz] = ind2sub(size(IMG), i);
-                testCase.verifyEqual([recon.x(ix) recon.z(iz)], S, ...
+                [ix, iy] = ind2sub(size(IMG), i);
+                testCase.verifyEqual([recon.x(ix) recon.y(iy)], S, ...
                     'AbsTol', 1.01*pix, sprintf('case %d', k));
             end
         end
@@ -132,7 +138,7 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
         function samplesStayWithinTheirElement(testCase)
             % Delays before the first or after the last sample must be
             % discarded, not read from the neighbouring element.
-            [~, x, z, x_el, recon, tr] = testCase.linear_case(8);
+            [~, x, y, y_el, recon, tr] = testCase.linear_case(8);
             recon.t = recon.t(200:260);   % short window: many out of range
             Nt = numel(recon.t);
             M = compute_das_matrix_general(recon, tr, ...
@@ -141,10 +147,10 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
             el = ceil(col/Nt);
             sample = col - (el-1)*Nt;
             % Recompute the element of each entry from its delay:
-            [X, Z] = ndgrid(x, z);
-            d_in = das_transmit_distance(X(pix), Z(pix), tr, ...
+            [X, Y] = ndgrid(x, y);
+            d_in = das_transmit_distance(X(pix), Y(pix), tr, ...
                 struct('focus', Inf, 'steer', deg2rad(10)));
-            t_del = (hypot(X(pix) - x_el(el)', Z(pix)) + d_in)/testCase.c;
+            t_del = (hypot(Y(pix) - y_el(el)', X(pix)) + d_in)/testCase.c;
             j = round((t_del - recon.t(1))*testCase.Fs) + 1;
             testCase.verifyEqual(j, sample);
             testCase.verifyTrue(all(sample >= 1 & sample <= Nt));
@@ -152,13 +158,13 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
 
         function cosineApodizationTapersToThreshold(testCase)
             [~, ~, ~, ~, recon, tr] = testCase.linear_case(1);
-            recon.x = linspace(-10e-3, 10e-3, 201);
-            recon.z = 5e-3;
+            recon.x = 5e-3;
+            recon.y = linspace(-10e-3, 10e-3, 201);
             recon.t = (0:4999)/testCase.Fs;
             recon.apodization = 'cosine';
             M = compute_das_matrix_general(recon, tr, ...
                 struct('focus', Inf, 'steer', 0));
-            alpha = atan2(recon.x', recon.z);
+            alpha = atan2(recon.y', recon.x);
             v = full(max(M,[],2));
             expected = cos(pi/2*alpha/recon.alpha_th);
             expected(abs(alpha) > recon.alpha_th) = 0;
@@ -168,16 +174,16 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
         function curvedArrayIgnoresPixelsBehindTheSurface(testCase)
             T.Type = 'C1-6D'; T = get_transducer_properties(T);
             El = get_element_geometry(T);
-            recon = struct('x', linspace(-40e-3, 40e-3, 41), ...
-                'z', linspace(-5e-3, 60e-3, 33), 'c', testCase.c, ...
+            recon = struct('x', linspace(-5e-3, 60e-3, 33), ...
+                'y', linspace(-40e-3, 40e-3, 41), 'c', testCase.c, ...
                 't', (0:3999)/testCase.Fs, 'Fs', testCase.Fs, ...
                 'alpha_th', pi/6);
-            tr = struct('x_el', El.y', 'z_el', El.x', 'azimuth', El.theta', ...
+            tr = struct('x_el', El.x', 'y_el', El.y', 'azimuth', El.theta', ...
                 'center', El.Center, 'radius', El.Radius);
             M = compute_das_matrix_general(recon, tr, ...
                 struct('focus', Inf, 'steer', 0));
-            [X, Z] = ndgrid(recon.x, recon.z);
-            inside = X(:).^2 + (Z(:) - El.Center).^2 < El.Radius^2;
+            [X, Y] = ndgrid(recon.x, recon.y);
+            inside = Y(:).^2 + (X(:) - El.Center).^2 < El.Radius^2;
             used = full(any(M,2));
             testCase.verifyFalse(any(used(inside)));
             testCase.verifyTrue(any(used(~inside)));
@@ -193,8 +199,13 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
                 S.SimulationParameters, S.Transducer, S.Transmit, ...
                 S.Geometry, N, 100);
             El = get_element_geometry(S.Transducer);
-            testCase.verifyEqual(tr.x_el, El.y');
-            testCase.verifyEqual(tr.z_el, El.x');
+            testCase.verifyEqual(tr.x_el, El.x');
+            testCase.verifyEqual(tr.y_el, El.y');
+            % Image axes: x axial over the domain depth, y lateral:
+            testCase.verifyEqual(recon.x(1), S.Geometry.Domain.Xmin);
+            testCase.verifyLessThanOrEqual(recon.x(end), S.Geometry.Domain.Xmax);
+            W = S.Geometry.Domain.Ymax - S.Geometry.Domain.Ymin;
+            testCase.verifyEqual(recon.y(1), -W/2, 'AbsTol', 1e-15);
             testCase.verifyEqual(tr.azimuth, El.theta');
             testCase.verifyEqual(tx.steer, deg2rad(7));
             testCase.verifyEqual(tx.axis_delay, 0);
@@ -206,14 +217,14 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
     end
 
     methods (Access = private)
-        function [t, x, z, x_el, recon, tr] = linear_case(testCase, Nelem)
+        function [t, x, y, y_el, recon, tr] = linear_case(testCase, Nelem)
             t = ((0:testCase.Nt-1)/testCase.Fs - 1.3e-6)';
-            x_el = -testCase.pitch/2*(Nelem-1) + (0:Nelem-1)*testCase.pitch;
-            x = -3e-3:1e-4:3e-3;
-            z = 0:1e-4:8e-3;
-            recon = struct('x', x, 'z', z, 'c', testCase.c, 't', t', ...
+            y_el = -testCase.pitch/2*(Nelem-1) + (0:Nelem-1)*testCase.pitch;
+            x = 0:1e-4:8e-3;      % axial
+            y = -3e-3:1e-4:3e-3;  % lateral
+            recon = struct('x', x, 'y', y, 'c', testCase.c, 't', t', ...
                 'Fs', testCase.Fs, 'alpha_th', pi/3, 'apodization', 'binary');
-            tr = struct('x_el', x_el, 'z_el', zeros(1,Nelem), ...
+            tr = struct('x_el', zeros(1,Nelem), 'y_el', y_el, ...
                 'azimuth', zeros(1,Nelem), 'center', -Inf, 'radius', Inf);
         end
     end
@@ -224,4 +235,11 @@ function A = pixel_element_sample(M, Nt)
 [pix, col] = find(M);
 el = ceil(col/Nt);
 A = sortrows([pix el col-(el-1)*Nt]);
+end
+
+function rows = lateral_first(x, y)
+% Rows of a general DAS matrix (axial index fastest) in the pixel order of
+% compute_das_matrix (lateral index fastest).
+G = reshape(1:numel(x)*numel(y), numel(x), numel(y));
+rows = reshape(G', [], 1);
 end

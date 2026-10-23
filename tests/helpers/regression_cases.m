@@ -213,13 +213,13 @@ end
 function out = case_das_matrix(~)
 c  = 1540; Fs = 20e6;
 t  = (0:399)'/Fs;
-x_el = (-7.5:7.5)*0.3e-3;
-x  = linspace(-2e-3, 2e-3, 9);
-y  = linspace(2e-3, 8e-3, 13);
-M_plane = compute_das_matrix(t, x, y, x_el, c, Fs, Inf);
-M_focus = compute_das_matrix(t, x, y, x_el, c, Fs, -10e-3);
+y_el = (-7.5:7.5)*0.3e-3;          % lateral element positions
+y  = linspace(-2e-3, 2e-3, 9);     % lateral
+x  = linspace(2e-3, 8e-3, 13);     % axial
+M_plane = compute_das_matrix(t, y, x, y_el, c, Fs, Inf);
+M_focus = compute_das_matrix(t, y, x, y_el, c, Fs, -10e-3);
 stream = RandStream('mt19937ar','Seed',3);
-RF = randn(stream, numel(t)*numel(x_el), 1);
+RF = randn(stream, numel(t)*numel(y_el), 1);
 out.size_plane = size(M_plane);
 out.nnz_plane  = nnz(M_plane);
 out.img_plane  = full(M_plane*RF);

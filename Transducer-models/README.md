@@ -16,8 +16,10 @@ Accepted contents:
    - Impulse responses: `TransmitImpulseResponse`, `ReceiveImpulseResponse`
      and `SamplingRate`, or `IR_trans`, `IR_rec`, `Fs_trans` and `Fs_rec`
      (equal sampling rates).
-   - Other fields are ignored (for example integration points: they depend
-     on the simulation grid and are recomputed for each simulation).
+   - Other fields are ignored, in particular integration points: they
+     depend on the simulation grid and are recomputed for each simulation,
+     in the PROTEUS orientation (x axial, y lateral, z elevation). Only
+     orientation-free quantities (lengths, angles, responses) are read.
 2. A Verasonics `Trans` struct: only `Trans.IR1wy` (one-way, 250 MHz) is
    used, for transmit and receive.
 

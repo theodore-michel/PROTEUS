@@ -73,6 +73,23 @@ We recommend to install the software components (such as k-Wave) in the default 
 
 **Note:** custom paths stored in `PATHS.mat` (the format used by earlier versions) are still read, with a deprecation warning, when no `proteus_local_paths.m` exists. `PATHS.mat` is no longer part of the repository: if you customised it, copy your paths to `proteus_local_paths.m` (or move `PATHS.mat` aside) **before** pulling this version, otherwise git reports a conflict on `PATHS.mat`.
 
+## Coordinate convention
+
+All of PROTEUS (grid, k-Wave arrays, transducers, geometries, microbubble
+positions, pressure maps and reconstructed images) uses one orientation:
+
+| Axis | Direction | Notes |
+|---|---|---|
+| x | axial (depth) | flat arrays lie at x = 0 and face positive x; curved arrays have their outer edges at x = 0 and protrude into x > 0 |
+| y | lateral | the elements of linear and curved arrays are spread along y |
+| z | elevation (height) | the element height; small compared with x and y |
+
+The imaging plane is the xy plane (z = 0). Arrays are indexed in this order,
+for example a pressure map or image is Nx-by-Ny (depth-by-lateral). Code that
+calls PROTEUS functions directly must use the same orientation: transducer
+integration points outside the grid (for example a transducer defined with z
+as depth) raise an error.
+
 ## Simulation setup
 
 Start MATLAB and navigate to the root folder of this directory. Start the graphical user interface (GUI) by running `MainGUI.mlapp` in the root folder. To do so, either:

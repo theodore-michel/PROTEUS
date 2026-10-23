@@ -30,10 +30,11 @@ resultsFolder = uigetdir(PATHS.ResultsPath, ...
 GUIfilepath = [pathname GUIfilename];
 
 % Perform the DAS reconstruction
-[IMG,z,x] = beamformer(resultsFolder,GUIfilepath);
+% IMG is Nx-by-Ny-by-Nframes: x axial, y lateral (PROTEUS convention)
+[IMG,x,y] = beamformer(resultsFolder,GUIfilepath);
 
 % Create a video with all the frames
 videoFileName = [GUIfilename(1:end-4) '_DAS_recon.mp4'];
-write_video(IMG,z,x,videoFileName)
+write_video(IMG,x,y,videoFileName)
 
 close all

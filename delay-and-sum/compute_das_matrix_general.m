@@ -5,13 +5,15 @@ function M_DAS = compute_das_matrix_general(recon, transducer, transmit)
 % General version of compute_das_matrix, under test against it (see
 % tests/DelayAndSumTest.m). Construct a sparse matrix that performs
 % delay-and-sum reconstruction on element RF data. The matrix is M-by-N,
-% where M is the total number of pixels (Nx*Nz) and N is the total number
+% where M is the total number of pixels (Nx*Ny) and N is the total number
 % of samples in the RF data (Nt*Nelem).
+%
+% Coordinates follow the PROTEUS convention: x axial (depth), y lateral.
 %
 % INPUT ARGUMENTS:
 %   recon:
-%   - x:            lateral coordinates of the reconstruction [m]
-%   - z:            axial   coordinates of the reconstruction [m]
+%   - x:            axial   coordinates of the reconstruction [m]
+%   - y:            lateral coordinates of the reconstruction [m]
 %   - c:            speed of sound for the reconstruction [m/s]
 %   - t:            time axis of the RF data [s], with respect to the
 %                   moment the transmitted wave leaves the first firing
@@ -22,9 +24,10 @@ function M_DAS = compute_das_matrix_general(recon, transducer, transmit)
 %   - apodization:  'cosine' (default): cos(pi/2*alpha/alpha_th) taper,
 %                   or 'binary': 1 for angles up to alpha_th
 %   transducer:
-%   - x_el:         lateral element coordinates [m]
-%   - z_el:         axial element coordinates [m]
-%   - azimuth:      angle of the element normals with the axial axis [rad]
+%   - x_el:         axial element coordinates [m]
+%   - y_el:         lateral element coordinates [m]
+%   - azimuth:      angle of the element normals with the axial axis,
+%                   positive towards positive y [rad]
 %   - center:       axial coordinate of the centre of curvature (-Inf for a
 %                   linear array) [m]
 %   - radius:       radius of curvature (Inf for a linear array) [m]
@@ -37,9 +40,9 @@ function M_DAS = compute_das_matrix_general(recon, transducer, transmit)
 %                   0)
 %
 % OUTPUT:
-%   M_DAS:          sparse (Nx*Nz)-by-(Nt*Nelem) delay-and-sum matrix. The
-%                   image is reshape(M_DAS*RF(:), Nx, Nz), with RF an
-%                   Nt-by-Nelem matrix.
+%   M_DAS:          sparse (Nx*Ny)-by-(Nt*Nelem) delay-and-sum matrix. The
+%                   image is reshape(M_DAS*RF(:), Nx, Ny) (depth-by-lateral),
+%                   with RF an Nt-by-Nelem matrix.
 %
 % Partially based on:
 % Vincent Perrot, Maxime Polichetti, Francois Varray, Damien Garcia, So you
@@ -68,20 +71,20 @@ end
 
 %% GRIDS
 Nt      = length(recon.t);              % Number of time samples per element
-x_el    = transducer.x_el(:)';          % 1-by-Nelem
-z_el    = transducer.z_el(:)';
+x_el    = transducer.x_el(:)';          % 1-by-Nelem, axial
+y_el    = transducer.y_el(:)';          % 1-by-Nelem, lateral
 Nelem   = length(x_el);                 % Number of elements
 
-% Image coordinate grid (column arrays):
-[X, Z] = ndgrid(recon.x, recon.z);
+% Image coordinate grid (column arrays, axial index fastest):
+[X, Y] = ndgrid(recon.x, recon.y);
 X = X(:);
-Z = Z(:);
+Y = Y(:);
 Npixels = numel(X);
 
 %% DELAYS
 % Transmit path (Npixels-by-1) and receive path (Npixels-by-Nelem):
-d_in   = das_transmit_distance(X, Z, transducer, transmit);
-d_back = sqrt((X-x_el).^2 + (Z-z_el).^2);
+d_in   = das_transmit_distance(X, Y, transducer, transmit);
+d_back = sqrt((Y-y_el).^2 + (X-x_el).^2);
 
 t_del = d_back/recon.c + d_in/recon.c + transmit.axis_delay;
 
@@ -90,7 +93,7 @@ j = round((t_del - recon.t(1))*recon.Fs) + 1;
 
 %% APODIZATION
 % Angle between the element normal and the direction to the pixel:
-alpha = atan2(X-x_el, Z-z_el) - transducer.azimuth(:)';
+alpha = atan2(Y-y_el, X-x_el) - transducer.azimuth(:)';
 
 switch recon.apodization
     case 'cosine'
@@ -105,7 +108,7 @@ v(abs(alpha) > recon.alpha_th) = 0;
 
 % No pixels inside the circle of curvature (behind a curved array):
 if isfinite(transducer.radius)
-    inside = X.^2 + (Z-transducer.center).^2 < transducer.radius^2;
+    inside = Y.^2 + (X-transducer.center).^2 < transducer.radius^2;
     v(inside,:) = 0;
 end
 

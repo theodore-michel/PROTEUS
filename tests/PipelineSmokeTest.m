@@ -35,8 +35,8 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
                 'smoke_curved_rf');
             testCase.verifyRFIsValid(out, S);
 
-            [IMG, z, x] = DAS_reconstruction_general(resultDir, settingsFile);
-            testCase.verifySize(IMG, [numel(x) numel(z) numel(out.RF)]);
+            [IMG, x, y] = DAS_reconstruction_general(resultDir, settingsFile);
+            testCase.verifySize(IMG, [numel(x) numel(y) numel(out.RF)]);
             testCase.verifyEqual(max(IMG,[],[1 2]), zeros(1,1,numel(out.RF)));
         end
 
@@ -73,10 +73,14 @@ classdef (SharedTestFixtures = {ProteusTestEnvironment}) ...
             testCase.verifyRFIsValid(out, S);
 
             % Both beamformers accept the data of a linear array:
-            [IMG0, z0, x0] = DAS_reconstruction(resultDir, settingsFile);
-            [IMG1, z1, x1] = DAS_reconstruction_general(resultDir, settingsFile);
-            testCase.verifySize(IMG0, [numel(x0) numel(z0) numel(out.RF)]);
-            testCase.verifySize(IMG1, [numel(x1) numel(z1) numel(out.RF)]);
+            % Both beamformers return axial-by-lateral images:
+            [IMG0, x0, y0] = DAS_reconstruction(resultDir, settingsFile);
+            [IMG1, x1, y1] = DAS_reconstruction_general(resultDir, settingsFile);
+            testCase.verifySize(IMG0, [numel(x0) numel(y0) numel(out.RF)]);
+            testCase.verifySize(IMG1, [numel(x1) numel(y1) numel(out.RF)]);
+            testCase.verifyEqual(x0(1), 0);   % axial from the transducer
+            testCase.verifyLessThan(y0(1), 0);   % lateral, centred
+            testCase.verifyGreaterThan(y0(end), 0);
         end
     end
 

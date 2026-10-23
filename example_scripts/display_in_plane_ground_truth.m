@@ -225,11 +225,10 @@ N_skip_quiv = floor(length(x_visu_v)/N_keep_quiv);
 
 figure(1)
 subplot(2,1,1)
-imagesc(x_visu_v.*1e3,y_visu_v.*1e3,V_mag)
-% imagesc(V_mag)
-set(gca,'ydir','normal');
-xlabel('axial distance (mm)')
-ylabel('lateral distance (mm)')
+% Depth (x) downwards, lateral (y) horizontal, as the DAS images:
+imagesc(y_visu_v.*1e3,x_visu_v.*1e3,V_mag.')
+xlabel('lateral distance (mm)')
+ylabel('axial distance (mm)')
 axis equal
 % hold all
 
@@ -242,20 +241,21 @@ mask(isnan(V_mag)) = 0;
 
 
 subplot(2,1,2)
-quiver(x_visu_v(1:N_skip_quiv:end).*1e3,y_visu_v(1:N_skip_quiv:end).*1e3,...
-    Vx_visu(1:N_skip_quiv:end,1:N_skip_quiv:end),...
-    Vy_visu(1:N_skip_quiv:end,1:N_skip_quiv:end));
+quiver(y_visu_v(1:N_skip_quiv:end).*1e3,x_visu_v(1:N_skip_quiv:end).*1e3,...
+    Vy_visu(1:N_skip_quiv:end,1:N_skip_quiv:end).',...
+    Vx_visu(1:N_skip_quiv:end,1:N_skip_quiv:end).');
 hold all
 for k = 1:length(B)
    boundary = B{k};
-   plot(x_visu_v(boundary(:,2)).*1e3, y_visu_v(boundary(:,1)).*1e3, 'k', 'LineWidth', 1)
+   plot(y_visu_v(boundary(:,1)).*1e3, x_visu_v(boundary(:,2)).*1e3, 'k', 'LineWidth', 1)
 end
 hold off
 axis equal
-xlim([min(x_visu_v.*1e3) max(x_visu_v.*1e3)])
-ylim([min(y_visu_v.*1e3) max(y_visu_v.*1e3)])
+xlim([min(y_visu_v.*1e3) max(y_visu_v.*1e3)])
+ylim([min(x_visu_v.*1e3) max(x_visu_v.*1e3)])
+set(gca,'ydir','reverse');
 grid on
-xlabel('axial distance (mm)')
-ylabel('lateral distance (mm)')
+xlabel('lateral distance (mm)')
+ylabel('axial distance (mm)')
 
 % hold off

@@ -1,14 +1,14 @@
-function d_in = das_transmit_distance(X, Z, transducer, transmit)
+function d_in = das_transmit_distance(X, Y, transducer, transmit)
 %DAS_TRANSMIT_DISTANCE Transmit path length of the delay-and-sum model.
 %
-% d_in = DAS_TRANSMIT_DISTANCE(X, Z, transducer, transmit) returns, for
-% each point (X, Z) (lateral, axial) [m], the distance travelled by the
-% transmitted wave from the moment the first element fires (t = 0, the
-% smallest transmit delay) until the wave reaches the point. d_in has the
-% size of X.
+% d_in = DAS_TRANSMIT_DISTANCE(X, Y, transducer, transmit) returns, for
+% each point (X, Y) (axial, lateral: PROTEUS convention) [m], the distance
+% travelled by the transmitted wave from the moment the first element
+% fires (t = 0, the smallest transmit delay) until the wave reaches the
+% point. d_in has the size of X.
 %
 % transducer: struct with fields
-% - x_el, z_el:  lateral and axial element positions [m]
+% - x_el, y_el:  axial and lateral element positions [m]
 % - center:      axial coordinate of the centre of curvature (-Inf for a
 %                linear array) [m]
 % transmit: struct with fields
@@ -24,7 +24,7 @@ function d_in = das_transmit_distance(X, Z, transducer, transmit)
 % they fire (apodization) or not.
 
 x_el = transducer.x_el(:)';
-z_el = transducer.z_el(:)';
+y_el = transducer.y_el(:)';
 
 F     = transmit.focus;
 steer = transmit.steer;
@@ -36,10 +36,10 @@ end
 
 if isfinite(F)
     % Focal point or virtual source:
-    Fx = F*sin(steer);
-    Fz = F*cos(steer);
-    D_el = sqrt((x_el-Fx).^2 + (z_el-Fz).^2);
-    D    = sqrt((X-Fx).^2 + (Z-Fz).^2);
+    Fx = F*cos(steer);  % axial
+    Fy = F*sin(steer);  % lateral
+    D_el = sqrt((y_el-Fy).^2 + (x_el-Fx).^2);
+    D    = sqrt((Y-Fy).^2 + (X-Fx).^2);
 
     if F < 0
         % Diverging wave, t = 0 at the element closest to the virtual
@@ -49,14 +49,14 @@ if isfinite(F)
         % Converging wave, t = 0 at the element farthest from the
         % focus. Points before the focus (s = 1) are reached earlier than
         % the focus, points after it (s = -1) later:
-        s = sign((Fx-X)*sin(steer) + (Fz-Z)*cos(steer));
+        s = sign((Fy-Y)*sin(steer) + (Fx-X)*cos(steer));
         d_in = max(D_el) - s.*D;
     end
 else
     % Plane wave, t = 0 at the first element along the propagation
     % direction:
-    d_in = X*sin(steer) + Z*cos(steer) - ...
-        min(x_el*sin(steer) + z_el*cos(steer));
+    d_in = Y*sin(steer) + X*cos(steer) - ...
+        min(y_el*sin(steer) + x_el*cos(steer));
 end
 
 end
