@@ -1,6 +1,6 @@
 # PROTEUS: A Physically Realistic Contrast-Enhanced Ultrasound Simulator
 
-Nathan Blanken , Baptiste Heiles , Alina Kuliesh, Michel Versluis , Kartik Jain, David Maresca, and Guillaume Lajoinie
+Nathan Blanken, Baptiste Heiles, Alina Kuliesh, Michel Versluis, Kartik Jain, David Maresca, and Guillaume Lajoinie
 
 Contrast-enhanced ultrasound simulator for microbubbles in vascular flow
 
@@ -210,7 +210,7 @@ If you believe your geometry is useful to other researchers, do not hesitate to 
 
 ## License and citation
 
-This code is available under an MIT licencse. If you use (parts of) the code, please cite our IEEE T-UFFC article:
+This code is available under an MIT licence. If you use (parts of) the code, please cite our IEEE T-UFFC article:
 
 Blanken, N., Heiles, B., Kuliesh, A., Versluis, M., Jain, K., Maresca, D., & Lajoinie, G. (2024). PROTEUS: A Physically Realistic Contrast-Enhanced Ultrasound Simulator—Part I: Numerical Methods. _IEEE Transactions on Ultrasonics, Ferroelectrics, and Frequency Control_. https://doi.org/10.1109/TUFFC.2024.3427850
 
