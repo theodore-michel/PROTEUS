@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTEUS Explained</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --ink:#1d2329; --muted:#5d6670; --line:#d9dde1;
+  --blue:#2166ac; --orange:#d95f02; --green:#2ca02c; --purple:#7b4fa8; --red:#c0392b;
+  --soft-blue:#e7f0f8; --soft-orange:#fdf0e6; --soft-green:#eaf6ea; --soft-purple:#f2ecf8; --soft-grey:#f0f1f2;
+  --code:#f1f3f5; --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{position:fixed;top:0;left:0;right:0;height:46px;display:flex;align-items:center;gap:14px;
+  padding:0 18px;background:var(--panel);border-bottom:1px solid var(--line);z-index:10}
+header .brand{font-weight:700;letter-spacing:.2px}
+header .section{color:var(--muted);font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;
+  font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}
+header button:hover{background:var(--soft-grey)}
+#counter{font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px;min-width:64px;text-align:right}
+#progress{position:fixed;top:46px;left:0;height:3px;background:var(--blue);z-index:10;transition:width .2s}
+main{padding-top:49px;height:100%}
+.slide{display:none;height:calc(100vh - 49px);overflow:auto;padding:26px 40px 30px}
+.slide.active{display:block}
+.slide h1{font-size:30px;margin:0 0 6px}
+.slide h2{font-size:24px;margin:0 0 4px}
+.kicker{color:var(--blue);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.lead{color:var(--muted);margin:0 0 16px;max-width:1100px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.cols.wide-left{grid-template-columns:1.35fr 1fr}
+.cols.wide-right{grid-template-columns:1fr 1.35fr}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 6px;font-size:16px}
+.card p,.card li{font-size:15px}
+.card ul,.card ol{margin:6px 0 0;padding-left:20px}
+figure{margin:0}
+figure img, figure video{width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff;display:block}
+figcaption{color:var(--muted);font-size:13px;margin-top:6px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;background:var(--code);
+  padding:1px 5px;border-radius:4px}
+.fn{color:var(--blue);font-weight:600}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-right:4px}
+.note{border-left:3px solid var(--orange);background:var(--soft-orange);padding:8px 12px;border-radius:4px;font-size:14px;margin-top:12px}
+.eq{font-family:"Times New Roman",Georgia,serif;font-size:18px;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:10px 14px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:600}
+svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.svgwrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px}
+.svgwrap svg{width:100%;height:auto;display:block}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0;font-size:14px}
+.controls label{display:flex;align-items:center;gap:6px}
+.controls input[type=range]{width:160px}
+.controls button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;font:inherit;font-size:14px;cursor:pointer}
+canvas{width:100%;background:#fff;border:1px solid var(--line);border-radius:8px;display:block}
+.toc{columns:2;column-gap:30px;font-size:15px}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a:hover{color:var(--blue)}
+.toc li{margin:2px 0;break-inside:avoid}
+.step{opacity:.25;transition:opacity .3s}
+.step.on{opacity:1}
+.stepdesc{min-height:110px}
+.small{font-size:13px;color:var(--muted)}
+@media (max-width:900px){
+  .slide{padding:18px 16px}
+  .cols,.cols.wide-left,.cols.wide-right,.cols3{grid-template-columns:1fr}
+  .toc{columns:1}
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">PROTEUS explained</span>
+  <span class="section" id="sectionName"></span>
+  <button id="prev" aria-label="Previous slide">&larr;</button>
+  <span id="counter"></span>
+  <button id="next" aria-label="Next slide">&rarr;</button>
+  <button id="tocBtn">Contents</button>
+</header>
+<div id="progress"></div>
+<main id="deck">
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="Introduction">
+  <div class="kicker">PROTEUS · how it works, from A to Z</div>
+  <h1>A contrast-enhanced ultrasound simulator in four modules</h1>
+  <p class="lead">PROTEUS simulates what an ultrasound probe records when microbubbles flow through a vessel tree: realistic flow, a full-wave acoustic simulation (k-Wave), nonlinear bubble dynamics, and the image reconstruction. This deck follows one simulation from the flow data to the image. Figures and videos were produced by running the PROTEUS code itself (revamp branch).</p>
+  <div class="cols3">
+    <div class="card"><h3>1 · Flow → ground truth</h3><p><code>streamline-module</code>: microbubbles are tracked through a CFD velocity field. Output: bubble positions, velocities and radii for every frame and pulse.</p></div>
+    <div class="card"><h3>2 · Acoustics</h3><p><code>acoustic-module</code>: builds the grid, tissue medium and transducer, runs k-Wave for the transmitted wave and propagates the bubble echoes back to the probe. Output: RF data per element.</p></div>
+    <div class="card"><h3>3 · Microbubbles</h3><p><code>microbubble-simulator</code>: a Rayleigh-Plesset ODE with a lipid shell turns the pressure each bubble feels into the volume pulsation that radiates its echo.</p></div>
+  </div>
+  <div class="cols3" style="margin-top:16px">
+    <div class="card"><h3>4 · Reconstruction</h3><p><code>delay-and-sum</code>: RF data → B-mode images (reference beamformer and the general one for curved arrays).</p></div>
+    <div class="card"><h3>Around them</h3><p><code>GUIfunctions</code> (settings and the 7 GUI panels), <code>mesh-voxelisation</code> (vessel STL → grid), <code>geometry_data</code> (flow geometries), <code>Transducer-models</code> (calibrations).</p></div>
+    <div class="card"><h3>Navigate</h3><p>Arrow keys or the buttons; <b>Contents</b> lists every slide. Each slide names the functions involved so you can open them next to it.</p></div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="Introduction">
+  <div class="kicker">The big picture</div>
+  <h2>Data flow through PROTEUS</h2>
+  <p class="lead">Two inputs (a flow simulation and the settings from the GUI) feed the RF simulation; the RF data feed the image reconstruction. Every arrow is a file on disk, so each stage can be rerun on its own.</p>
+  <div class="svgwrap">
+  <svg viewBox="0 0 1200 470" role="img" aria-label="PROTEUS pipeline">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5d6670"/></marker></defs>
+    <g font-size="14">
+      <!-- flow column -->
+      <rect x="20" y="30" width="230" height="70" rx="10" fill="#eaf6ea" stroke="#2ca02c"/>
+      <text x="135" y="58" text-anchor="middle" font-weight="700">CFD flow field</text>
+      <text x="135" y="80" text-anchor="middle" fill="#5d6670">Musubi lattice-Boltzmann, .vtu</text>
+      <rect x="20" y="140" width="230" height="70" rx="10" fill="#eaf6ea" stroke="#2ca02c"/>
+      <text x="135" y="168" text-anchor="middle" font-weight="700">vtu2matlab</text>
+      <text x="135" y="190" text-anchor="middle" fill="#5d6670">vtu.mat · inlet.mat · geometry</text>
+      <rect x="20" y="250" width="230" height="80" rx="10" fill="#eaf6ea" stroke="#2ca02c"/>
+      <text x="135" y="278" text-anchor="middle" font-weight="700">generate_streamlines</text>
+      <text x="135" y="300" text-anchor="middle" fill="#5d6670">track bubbles (ode23) through</text>
+      <text x="135" y="318" text-anchor="middle" fill="#5d6670">the velocity field</text>
+      <rect x="20" y="370" width="230" height="80" rx="10" fill="#fff" stroke="#2ca02c" stroke-dasharray="5 4"/>
+      <text x="135" y="398" text-anchor="middle" font-weight="700">Ground truth</text>
+      <text x="135" y="420" text-anchor="middle" fill="#5d6670">Frame_XX.mat: Points,</text>
+      <text x="135" y="438" text-anchor="middle" fill="#5d6670">Velocity, Radius per pulse</text>
+      <path d="M135 100 V138" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M135 210 V248" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M135 330 V368" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- GUI -->
+      <rect x="320" y="30" width="240" height="70" rx="10" fill="#f2ecf8" stroke="#7b4fa8"/>
+      <text x="440" y="58" text-anchor="middle" font-weight="700">MainGUI + 7 panels</text>
+      <text x="440" y="80" text-anchor="middle" fill="#5d6670">Transducer, Transmit, Medium, …</text>
+      <rect x="320" y="140" width="240" height="70" rx="10" fill="#fff" stroke="#7b4fa8" stroke-dasharray="5 4"/>
+      <text x="440" y="168" text-anchor="middle" font-weight="700">Settings file (.mat)</text>
+      <text x="440" y="190" text-anchor="middle" fill="#5d6670">structs written by write_to_file</text>
+      <path d="M440 100 V138" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- main_RF -->
+      <rect x="320" y="250" width="560" height="200" rx="12" fill="#e7f0f8" stroke="#2166ac"/>
+      <text x="600" y="276" text-anchor="middle" font-weight="700" font-size="16">main_RF (acoustic-module)</text>
+      <g font-size="13">
+        <rect x="340" y="292" width="120" height="58" rx="8" fill="#fff" stroke="#2166ac"/>
+        <text x="400" y="316" text-anchor="middle">grid, medium,</text><text x="400" y="334" text-anchor="middle">transducer</text>
+        <rect x="480" y="292" width="120" height="58" rx="8" fill="#fff" stroke="#2166ac"/>
+        <text x="540" y="316" text-anchor="middle">k-Wave:</text><text x="540" y="334" text-anchor="middle">transmit wave</text>
+        <rect x="620" y="292" width="120" height="58" rx="8" fill="#fdf0e6" stroke="#d95f02"/>
+        <text x="680" y="316" text-anchor="middle">bubble ODE</text><text x="680" y="334" text-anchor="middle">→ mass sources</text>
+        <rect x="760" y="292" width="100" height="58" rx="8" fill="#fff" stroke="#2166ac"/>
+        <text x="810" y="316" text-anchor="middle">echoes to</text><text x="810" y="334" text-anchor="middle">transducer</text>
+        <path d="M460 321 H478" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M600 321 H618" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M740 321 H758" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M810 350 V376 H680 V352" stroke="#d95f02" stroke-width="1.6" fill="none" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+        <text x="745" y="392" text-anchor="middle" fill="#d95f02">bubble-bubble interactions (optional)</text>
+        <rect x="480" y="404" width="260" height="34" rx="8" fill="#fff" stroke="#2166ac"/>
+        <text x="610" y="426" text-anchor="middle">compute_RF: element signals (receive IR)</text>
+        <path d="M810 350 V420 H742" stroke="#5d6670" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      </g>
+      <path d="M250 410 H318" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M440 210 V248" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- outputs -->
+      <rect x="940" y="250" width="240" height="80" rx="10" fill="#fff" stroke="#2166ac" stroke-dasharray="5 4"/>
+      <text x="1060" y="278" text-anchor="middle" font-weight="700">RF data</text>
+      <text x="1060" y="300" text-anchor="middle" fill="#5d6670">RESULTS/…/Frame_XX.mat</text>
+      <text x="1060" y="318" text-anchor="middle" fill="#5d6670">RF{pulse}: Nelem × Nt</text>
+      <rect x="940" y="370" width="240" height="80" rx="10" fill="#f0f1f2" stroke="#5d6670"/>
+      <text x="1060" y="398" text-anchor="middle" font-weight="700">DAS_reconstruction</text>
+      <text x="1060" y="420" text-anchor="middle" fill="#5d6670">→ B-mode images, video</text>
+      <path d="M880 330 H938" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M1060 330 V368" stroke="#5d6670" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="940" y="30" width="240" height="180" rx="10" fill="#fff" stroke="#d9dde1"/>
+      <text x="960" y="56" font-weight="700">Also from the settings</text>
+      <text x="960" y="82" fill="#5d6670">main_pressure_field:</text>
+      <text x="960" y="102" fill="#5d6670">transmit field maps (xy, xz)</text>
+      <text x="960" y="132" fill="#5d6670">Calibrations:</text>
+      <text x="960" y="152" fill="#5d6670">Transducer-models/&lt;Type&gt;.mat</text>
+      <text x="960" y="182" fill="#5d6670">Paths: proteus_local_paths.m</text>
+    </g>
+  </svg>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="Introduction">
+  <div class="kicker">Before anything else</div>
+  <h2>One coordinate system, and the settings structs</h2>
+  <div class="cols wide-right">
+    <div>
+      <div class="svgwrap">
+      <svg viewBox="0 0 420 300" role="img" aria-label="Coordinate convention">
+        <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d2329"/></marker></defs>
+        <rect x="90" y="40" width="240" height="14" fill="#2166ac" rx="2"/>
+        <text x="210" y="72" text-anchor="middle" font-size="12" fill="#2166ac">transducer at x = 0 (elements along y)</text>
+        <rect x="70" y="30" width="290" height="240" fill="none" stroke="#5d6670" stroke-dasharray="5 4"/>
+        <text x="345" y="262" text-anchor="end" font-size="12" fill="#5d6670">simulation domain</text>
+        <polygon points="90,54 330,54 330,250 90,250" fill="#2166ac" opacity=".12"/>
+        <text x="100" y="240" font-size="12" fill="#2166ac">beam (plane wave)</text>
+        <circle cx="240" cy="190" r="5" fill="#d95f02"/><circle cx="190" cy="215" r="4" fill="#d95f02"/><circle cx="225" cy="150" r="3" fill="#d95f02"/>
+        <text x="252" y="194" font-size="12" fill="#d95f02">bubbles</text>
+        <path d="M40 60 V250" stroke="#1d2329" stroke-width="2" marker-end="url(#ar2)"/><text x="48" y="262" font-size="15" font-weight="700">x</text><text x="48" y="280" font-size="12" fill="#5d6670">axial / depth</text>
+        <path d="M40 60 H380" stroke="#1d2329" stroke-width="2" marker-end="url(#ar2)"/><text x="372" y="82" font-size="15" font-weight="700">y</text><text x="330" y="98" font-size="12" fill="#5d6670">lateral</text>
+        <circle cx="40" cy="60" r="7" fill="#fff" stroke="#1d2329" stroke-width="2"/><circle cx="40" cy="60" r="2" fill="#1d2329"/>
+        <text x="14" y="50" font-size="15" font-weight="700">z</text><text x="2" y="20" font-size="12" fill="#5d6670">elevation (out of page)</text>
+      </svg>
+      </div>
+      <p class="small">Imaging plane = xy (z = 0). Arrays and images are indexed in this order: a pressure map or image is N<sub>x</sub>×N<sub>y</sub> (depth × lateral). Points outside the grid raise an error.</p>
+    </div>
+    <div class="card">
+      <h3>The settings (one struct per GUI panel)</h3>
+      <table class="t">
+        <tr><th>Struct</th><th>Holds</th><th>Default</th></tr>
+        <tr><td><code>Transducer</code></td><td>geometry, impulse responses, configuration</td><td>P4-1, 96 el., pitch 0.295 mm</td></tr>
+        <tr><td><code>Transmit</code></td><td>pulse, delays, focus/angle, apodization</td><td>2 cycles, 2.5 MHz, 200 kPa, plane wave</td></tr>
+        <tr><td><code>Medium</code></td><td>tissue and blood properties, speckle</td><td>general tissue, 2 % inhomogeneity</td></tr>
+        <tr><td><code>Microbubble</code></td><td>number, size distribution, gas, shell model</td><td>10 bubbles, SF<sub>6</sub>, Marmottant</td></tr>
+        <tr><td><code>Geometry</code></td><td>flow geometry, rotation, start depth, domain</td><td>renal_tree</td></tr>
+        <tr><td><code>Acquisition</code></td><td>frames, frame rate, pulsing scheme</td><td>10 frames, 500 Hz, standard</td></tr>
+        <tr><td><code>SimulationParameters</code></td><td>points per wavelength, CFL, hybrid/full, solver</td><td>6 PPW, CFL 0.3, hybrid, C++ solver</td></tr>
+      </table>
+      <p class="small">The GUI calls <span class="fn">reset_*</span> at start-up and <span class="fn">write_to_file</span> to save them; <span class="fn">main_RF</span> loads that file. The test helper <code>make_default_settings</code> does the same headlessly.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="1 · Flow and ground truth">
+  <div class="kicker">Module 1 · streamline-module</div>
+  <h2>From a CFD velocity field to bubble positions</h2>
+  <div class="cols wide-left">
+    <div class="svgwrap">
+    <svg viewBox="0 0 640 360" id="flowSvg" role="img" aria-label="Streamline tracking in a bifurcating vessel">
+      <text x="20" y="26" font-size="14" font-weight="700">One bubble = one trajectory, sampled at the acquisition times</text>
+      <text x="20" y="46" font-size="12" fill="#5d6670">dots: positions at successive frames · dot size: bubble radius · moving dot: live tracking</text>
+      <path d="M20 158 H240 C330 158 390 80 620 80 L620 140 C480 140 400 165 335 200 C400 235 480 260 620 260 L620 320 C390 320 330 242 240 242 H20 Z" fill="#eaf6ea" stroke="#2ca02c" stroke-width="2.5"/>
+      <g fill="none" stroke-width="1.5" id="flowLines">
+        <path d="M20 178 H240 C330 178 390 95 620 95" stroke="#2166ac"/>
+        <path d="M20 192 H240 C340 192 395 122 620 122" stroke="#d95f02"/>
+        <path d="M20 208 H240 C340 208 395 278 620 278" stroke="#7b4fa8"/>
+        <path d="M20 222 H240 C330 222 390 305 620 305" stroke="#c0392b"/>
+      </g>
+      <g id="flowDots"></g>
+      <text x="26" y="148" font-size="13" fill="#2ca02c">inlet</text>
+      <text x="566" y="72" font-size="13" fill="#2ca02c">outlet</text>
+      <text x="566" y="336" font-size="13" fill="#2ca02c">outlet</text>
+      <text x="400" y="205" font-size="12" fill="#5d6670">at an outlet, the bubble is replaced</text>
+      <text x="400" y="221" font-size="12" fill="#5d6670">at the inlet with a new radius</text>
+    </svg>
+    </div>
+    <div>
+      <div class="card">
+        <h3>What happens</h3>
+        <ol>
+          <li><span class="fn">vtu2matlab</span> converts the Musubi <code>.vtu</code> (points, cells, velocity) into <code>vtu.mat</code> plus the inlet and geometry properties.</li>
+          <li><span class="fn">generate_streamlines</span> draws a start position in the vessel (<span class="fn">draw_start_position</span>), and integrates <code>dx/dt = v(x)</code> with <code>ode23</code> (<span class="fn">get_velocity</span> looks up the cell velocity).</li>
+          <li>Trajectories are sampled at every acquisition time: frames at the frame rate, and pulses inside a frame at the time between pulses.</li>
+          <li>Radii come from the size distribution (<span class="fn">draw_random_radii</span>); a bubble that leaves the vessel (<span class="fn">exitVesselFcn</span>) is replaced at the inlet, drawn from a density map so that all branches stay populated.</li>
+        </ol>
+        <p class="small">Output, per frame: <code>Frame.PulseN.Points</code> (N×3, geometry units), <code>Velocity</code>, <code>Radius</code>, <code>StreamNumber</code>. <span class="fn">load_microbubbles</span> later moves them into simulation coordinates: subtract the bounding-box centre, rotate (<code>Geometry.Rotation</code>), add <code>Geometry.Center</code>.</p>
+      </div>
+      <figure style="margin-top:12px"><img src="assets/renal_tree.png" alt="Renal tree geometry"><figcaption>Example geometry shipped with PROTEUS (renal_tree). The flow data (vtu) comes from Zenodo.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="1 · Flow and ground truth">
+  <div class="kicker">Module 1 · where the velocity comes from</div>
+  <h2>How flow simulation data is used</h2>
+  <figure><img src="assets/flow_field_tracks.png" alt="Velocity field and tracked bubbles"><figcaption>Real <code>generate_streamlines</code> run on a small synthetic bifurcation (an analytical incompressible field written in the <code>vtu.mat</code> format, not a CFD result). Left: speed on the lattice cells (z = 0). Right: 5 of the bubbles over 40 frames.</figcaption></figure>
+  <div class="cols wide-left" style="margin-top:12px">
+    <div class="card">
+      <h3>From CFD to trajectories</h3>
+      <ol>
+        <li><b>Get a flow field:</b> the example data on Zenodo, or your own simulation (the lattice-Boltzmann solver Musubi, or any CFD exporting a <code>.vtu</code>). Usually a converged, steady-state result.</li>
+        <li><b>Convert it:</b> <span class="fn">vtu2matlab</span> writes <code>vtu.mat</code> and the geometry files. You set the units and the name of the velocity field in <code>vtuProperties</code>.</li>
+        <li><b>Build the inlet:</b> <span class="fn">backpropagation</span> runs tracers backwards with −v, <span class="fn">filter_points</span> keeps those ending on the inlet, <span class="fn">get_probability_density</span> turns them into the injection density.</li>
+        <li><b>Load:</b> <span class="fn">load_vessel_data</span> drops zero-velocity cells and builds a sparse lookup from Cartesian cell to velocity.</li>
+        <li><b>Track:</b> <code>ode23</code> calls <span class="fn">get_velocity</span>: position → nearest cell → velocity. It stops when the cell is outside the vessel.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="note" style="margin-top:0"><b>What PROTEUS reads:</b> only the velocity field. Pressure or other fields in the VTU are not used. The field is a single snapshot, frozen in time, so pulsatile flow is not represented. Bubbles follow it as passive tracers (no drag, buoyancy or acoustic forces) and the velocity is piecewise constant per cell.</div>
+      <figure style="margin-top:10px"><video src="assets/flow_tracks.mp4" controls loop muted autoplay playsinline></video><figcaption>Bubble positions frame by frame (same synthetic field). This is what <code>Frame_XX.mat</code> holds and what the acoustic module reads.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Module 2 · acoustic-module · setting up</div>
+  <h2>The simulation domain: just big enough for the beam and the geometry</h2>
+  <div class="cols">
+    <figure><img src="assets/domain_P41.png" alt="P4-1 domain"><figcaption>P4-1: transducer (blue), beam projection, rotated geometry box (orange), domain (dashed).</figcaption></figure>
+    <figure><img src="assets/domain_C16D.png" alt="C1-6D domain"><figcaption>C1-6D: one patch per element on the arc; a diverging beam needs a much wider domain.</figcaption></figure>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <p><span class="fn">compute_simulation_domain</span> takes the transducer surface and its projection to the deepest point of the geometry (beam shape from the elevation focus and the lateral focus or virtual source), adds a margin of 2 λ, and keeps the box. <span class="fn">define_grid</span> then sets the grid spacing <code>dx = c/(f<sub>0</sub>·PPW)</code> (default 6 points per wavelength) and the time step <code>dt = CFL·dx/c</code> (CFL 0.3), and chooses the PML thickness (≥ 15 points) so that every dimension has small prime factors, which keeps k-Wave's FFTs fast.</p>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Setting up · the medium</div>
+  <h2>Tissue, speckle, vessel, coupling region</h2>
+  <div class="cols">
+    <div class="card">
+      <h3><span class="fn">define_medium</span> builds the voxel maps k-Wave needs</h3>
+      <ul>
+        <li><b>Speckle:</b> sound speed and density are multiplied by <code>1 + σ·n</code>, with <code>n</code> a normal draw truncated at ±2σ (<span class="fn">random_truncated_normal</span>, σ = 2 %). These sub-wavelength fluctuations are the linear scatterers that make tissue echoes.</li>
+        <li><b>Vessel:</b> the STL surface of the geometry is voxelised (<span class="fn">VOXELISE</span>, mesh-voxelisation) after the same rotation and translation as the bubbles; inside, the properties of blood.</li>
+        <li><b>Attenuation:</b> power law <code>α = α<sub>0</sub>·f<sup>y</sup></code>; <code>BonA</code> for nonlinearity.</li>
+        <li><b>Curved arrays:</b> no speckle inside the circle of curvature (the coupling medium behind the surface).</li>
+      </ul>
+      <p class="small">The medium is saved with the results (<code>medium.mat</code>) and can be reused for later frames (<code>reuseMedium</code>).</p>
+    </div>
+    <div class="card">
+      <h3>Why the medium is random but reproducible</h3>
+      <p>The draw uses MATLAB's global random stream. PROTEUS no longer needs the Statistics toolbox for it: <span class="fn">random_truncated_normal</span> reproduces <code>random(truncate(makedist('Normal'),-c,c))</code> bit for bit (inverse CDF with <code>erfc</code>). The tests check this against stored toolbox draws.</p>
+      <div class="eq">n = −√2 · erfcinv( 2·[Φ(−c) + u·(Φ(c) − Φ(−c))] ),&nbsp; u ~ U(0,1)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Setting up · the transducer</div>
+  <h2>A transducer is a cloud of integration points</h2>
+  <figure><img src="assets/integration_points.png" alt="Integration points"></figure>
+  <div class="cols" style="margin-top:12px">
+    <div class="card"><p><span class="fn">get_element_geometry</span> defines where the elements are (flat array at x = 0, or a kerf-free arc for curved arrays). <span class="fn">get_transducer_integration_points</span> covers each element with points spaced <code>dy/IntegrationDensity</code> laterally (along the arc for curved arrays) and <code>dz/IntegrationDensity</code> in elevation; each point carries the weight (area)/(dy·dz).</p></div>
+    <div class="card"><p><span class="fn">get_transducer_integration_delays</span> adds the acoustic lens: each point is delayed by its path difference to the elevation focus, <code>√(z² + F²)/c</code>. The same points are used to emit (source) and to receive (sensor), so the element directivity and the lens come out of the simulation rather than a model.</p></div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Setting up · points on a grid</div>
+  <h2>Off-grid points: a band-limited delta on the grid</h2>
+  <div class="cols wide-left">
+    <figure><img src="assets/offgrid_weights.png" alt="Off-grid weights"><figcaption>One integration point (black cross) between grid nodes: its weights on the surrounding nodes are a truncated sinc in each direction (here a slice at z = 0).</figcaption></figure>
+    <div class="card">
+      <h3>How a point source or sensor lives on the k-Wave grid</h3>
+      <p>The integration points rarely coincide with grid nodes. <span class="fn">define_sensor_transducer</span> → <span class="fn">update_sensor_fast</span> represents each point by a band-limited delta function: the product of 1-D sinc functions centred on the point, truncated to ±4 nodes (<span class="fn">evaluate_delta_function</span>; Wise et al., JASA 2019).</p>
+      <ul>
+        <li><b>Sensor:</b> k-Wave records p on the mask nodes; the pressure at the points is <code>p<sub>points</sub> = W · p<sub>mask</sub></code>.</li>
+        <li><b>Source:</b> the same matrix transposed spreads each point's signal over the nodes, <code>s<sub>mask</sub> = Wᵀ · s<sub>points</sub></code>.</li>
+      </ul>
+      <p class="small">Bubbles use exactly the same mechanism (<span class="fn">define_sensor_MB</span>). With <code>OnGrid = true</code> each point simply snaps to its nearest node.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Setting up · points on a grid</div>
+  <h2>k-Wave grid and integration points are two different things</h2>
+  <figure><img src="assets/grid_vs_points.png" alt="Grid nodes, sensor mask and integration points"><figcaption>Left: real <code>define_sensor_transducer</code> output, tiny 8-element curved array on a coarse grid, slice z = 0. Each element's points alternate black and orange. Right: C1-6D against a correct grid and a grid in another orientation.</figcaption></figure>
+  <div class="cols3" style="margin-top:12px">
+    <div class="card"><h3>k-Wave grid</h3><p>Regular nodes filling the whole domain, where the wave is computed. Spacing is set by the wavelength. It knows nothing about the transducer.</p></div>
+    <div class="card"><h3>Integration points</h3><p>Continuous positions on the transducer surface, a description of the probe. They sit anywhere between nodes, and their number depends on the density you choose.</p></div>
+    <div class="card"><h3>The link: mask and weights</h3><p>The mask is every node within ±4 cells of some point, a band around the surface. <code>W</code> connects the two, so all points must lie inside the grid, in the same orientation. Otherwise: <code>pointsOutsideGrid</code>.</p></div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Setting up · the transmitted pulse</div>
+  <h2>Voltage → transducer → pressure</h2>
+  <figure><img src="assets/transmit_chain.png" alt="Transmit chain"></figure>
+  <div class="card" style="margin-top:12px">
+    <p><span class="fn">get_voltage_signal</span> makes the driving waveform (three-level, cosine with a rectangular or Hann envelope, or custom). <span class="fn">get_pressure_signal</span> convolves it with the transmit impulse response, <code>p = conv(V, IR)/F<sub>s</sub></code>, and scales it to the requested peak negative pressure (or keeps the voltage scale in 'Voltage' mode). The impulse response is a 3rd-order Butterworth band-pass between the −6 dB limits (<span class="fn">estimate_impulse_response</span>), or a measured one from <code>Transducer-models/&lt;Type&gt;.mat</code> (calibrated; C1-6D today).</p>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="2 · Acoustics: setting up">
+  <div class="kicker">Setting up · beam forming in transmit</div>
+  <h2>Transmit delays shape the wavefront</h2>
+  <div class="cols wide-right">
+    <div class="card">
+      <p><span class="fn">compute_delays</span> gives each element a firing time so that their wavelets add up to the wanted wavefront:</p>
+      <ul>
+        <li><b>plane wave</b> at angle θ: <code>τ = y·sinθ/c</code></li>
+        <li><b>focused</b> at F: elements far from the focus fire first, <code>τ = (D<sub>max</sub> − |E − F|)/c</code></li>
+        <li><b>diverging</b> from a virtual source behind the array: <code>τ = (|E − F| − D<sub>min</sub>)/c</code></li>
+        <li><b>curved, infinite focus:</b> a diverging wave from the centre of curvature (all delays 0 at θ = 0).</li>
+      </ul>
+      <p class="small">All delays are shifted so that the first element fires at t = 0. In the k-Wave source, each integration point gets its element delay plus its lens delay, applied as a phase shift in the frequency domain (<span class="fn">define_source_transducer</span>).</p>
+      <figure style="margin-top:10px"><img src="assets/delays.png" alt="Delays"></figure>
+    </div>
+    <div>
+      <div class="controls">
+        <label>Focus <input type="range" id="wfFocus" min="-40" max="80" value="30"><span id="wfFocusV">30 mm</span></label>
+        <label>Angle <input type="range" id="wfAngle" min="-25" max="25" value="0"><span id="wfAngleV">0°</span></label>
+        <label><input type="checkbox" id="wfCurved"> curved (C1-6D-like)</label>
+        <button id="wfPlay">Replay</button>
+      </div>
+      <canvas id="wfCanvas" width="760" height="560" aria-label="Wavefront from delayed elements"></canvas>
+      <p class="small">Interactive: every element emits a circular wavelet (blue) when its delay elapses. Where many wavelets coincide they add up in phase: that is the transmitted wavefront (red). Focus at ±80 mm behaves as a near plane wave; negative focus = virtual source behind the array; slide to 80 for "infinite".</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="3 · k-Wave">
+  <div class="kicker">The wave solver · k-Wave</div>
+  <h2>How k-Wave propagates the wave</h2>
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h3>Linear(ised) acoustics as three first-order equations</h3>
+        <div class="eq">∂<b>u</b>/∂t = −(1/ρ<sub>0</sub>) ∇p &nbsp;&nbsp;(momentum)</div>
+        <div class="eq">∂ρ/∂t = −ρ<sub>0</sub> ∇·<b>u</b> − <b>u</b>·∇ρ<sub>0</sub> + S<sub>m</sub> &nbsp;&nbsp;(mass, with mass source)</div>
+        <div class="eq">p = c<sub>0</sub>² (ρ + d·∇ρ<sub>0</sub> + nonlinear + absorption terms)</div>
+        <p>k-Wave solves them with a <b>k-space pseudospectral</b> method: spatial gradients are computed with FFTs (exact for band-limited fields, so 2–6 points per wavelength suffice instead of ~15 for finite differences), and a <b>k-space correction</b> <code>sinc(c<sub>0</sub>kΔt/2)</code> makes the time stepping exact for a homogeneous medium.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>What PROTEUS gives k-Wave</h3>
+        <table class="t">
+          <tr><th>k-Wave input</th><th>From PROTEUS</th></tr>
+          <tr><td><code>kgrid</code></td><td><span class="fn">define_grid</span>: N, dx, dt, Nt (from <span class="fn">compute_travel_times</span>)</td></tr>
+          <tr><td><code>medium</code></td><td><span class="fn">define_medium</span>: c, ρ, α, B/A maps</td></tr>
+          <tr><td><code>source.ux/uy</code> + <code>u_mask</code></td><td>transducer: velocity source = p/Z along the surface normal</td></tr>
+          <tr><td><code>source.p</code> + <code>p_mask</code></td><td>bubbles (full simulation): mass sources on their sinc masks</td></tr>
+          <tr><td><code>sensor.mask</code></td><td>bubble masks (+ transducer mask in hybrid mode)</td></tr>
+        </table>
+        <p class="small"><span class="fn">run_simulation</span> calls <code>kspaceFirstOrder3D</code> (MATLAB), <code>…3DC</code> (C++ CPU, default) or <code>…3DG</code> (CUDA) with a PML outside the domain. Staggered grid: velocity lives half a cell from pressure, hence the dx/2 shifts and the "k-Wave correction" in the reconstruction.</p>
+      </div>
+      <div class="note">PML = perfectly matched layer: an absorbing band around the domain that swallows outgoing waves, so the finite grid behaves like an infinite medium.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="3 · k-Wave">
+  <div class="kicker">The wave solver · seeing it run</div>
+  <h2>k-Wave with PROTEUS transducers (2-D illustrations)</h2>
+  <div class="cols">
+    <figure><video src="assets/kwave_P41_focused.mp4" controls loop muted autoplay playsinline></video>
+      <figcaption>P4-1, focused at 30 mm (delays from compute_delays, pulse from reset_transmit). The wave converges, passes the focus, scatters on 4 point inclusions and on the 0.5 % speckle; echoes travel back to the array.</figcaption></figure>
+    <figure><video src="assets/kwave_C16D_diverging.mp4" controls loop muted autoplay playsinline></video>
+      <figcaption>C1-6D, infinite focus: a diverging wave that appears to come from the centre of curvature. No speckle behind the arc (coupling region).</figcaption></figure>
+  </div>
+  <p class="small">These runs use <code>kspaceFirstOrder2D</code> in the imaging plane with the PROTEUS element geometry, delays and pulse; PROTEUS itself runs in 3-D, which adds the elevation focusing of the lens. The 4 inclusions are density contrasts standing in for scatterers; in PROTEUS, bubbles are mass sources driven by their ODE (next section). All frames share one colour scale, with a compressed amplitude (square root) that saturates near the focus so the weaker echoes stay visible; the wave also weakens as it spreads.</p>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="4 · Coupling acoustics and bubbles">
+  <div class="kicker">The heart of PROTEUS · main_RF</div>
+  <h2>Three iterations couple the wave, the bubbles and the probe</h2>
+  <div class="cols wide-left">
+    <div class="svgwrap">
+    <svg viewBox="0 0 680 420" id="loopSvg" role="img" aria-label="Coupling iterations">
+      <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1d2329"/></marker></defs>
+      <rect x="40" y="30" width="600" height="18" rx="3" fill="#2166ac"/><text x="340" y="22" text-anchor="middle" font-size="13" fill="#2166ac">transducer</text>
+      <g fill="#d95f02"><circle cx="220" cy="300" r="10"/><circle cx="400" cy="250" r="8"/><circle cx="500" cy="340" r="12"/></g>
+      <g class="step" data-step="1">
+        <path d="M150 52 Q200 170 215 286" stroke="#2166ac" stroke-width="3" fill="none" marker-end="url(#ar4)"/>
+        <path d="M330 52 Q370 140 395 238" stroke="#2166ac" stroke-width="3" fill="none" marker-end="url(#ar4)"/>
+        <path d="M480 52 Q500 200 500 324" stroke="#2166ac" stroke-width="3" fill="none" marker-end="url(#ar4)"/>
+        <text x="20" y="200" font-size="14" fill="#2166ac" font-weight="700">① k-Wave: transmit</text>
+        <text x="20" y="218" font-size="12" fill="#5d6670">bubbles record p<tspan baseline-shift="sub" font-size="9">inc</tspan>(t)</text>
+      </g>
+      <g class="step" data-step="2">
+        <path d="M232 296 Q310 260 388 252" stroke="#d95f02" stroke-width="2.5" fill="none" stroke-dasharray="6 4" marker-end="url(#ar4)"/>
+        <path d="M410 258 Q460 290 490 330" stroke="#d95f02" stroke-width="2.5" fill="none" stroke-dasharray="6 4" marker-end="url(#ar4)"/>
+        <path d="M488 345 Q350 360 232 308" stroke="#d95f02" stroke-width="2.5" fill="none" stroke-dasharray="6 4" marker-end="url(#ar4)"/>
+        <text x="250" y="395" font-size="14" fill="#d95f02" font-weight="700">② bubble ↔ bubble (N interactions)</text>
+      </g>
+      <g class="step" data-step="3">
+        <path d="M222 288 Q190 170 160 54" stroke="#2ca02c" stroke-width="3" fill="none" marker-end="url(#ar4)"/>
+        <path d="M402 240 Q420 150 430 54" stroke="#2ca02c" stroke-width="3" fill="none" marker-end="url(#ar4)"/>
+        <path d="M502 326 Q560 200 580 54" stroke="#2ca02c" stroke-width="3" fill="none" marker-end="url(#ar4)"/>
+        <text x="590" y="200" font-size="14" fill="#2ca02c" font-weight="700">③ echoes</text>
+        <text x="590" y="218" font-size="12" fill="#5d6670">to the probe</text>
+      </g>
+    </svg>
+    </div>
+    <div>
+      <div class="controls"><button id="loopPrev">◀</button><span id="loopLabel" class="mono">step 1 / 3</span><button id="loopNext">▶</button><button id="loopAll">show all</button></div>
+      <div class="card stepdesc" id="loopDesc"></div>
+      <div class="card" style="margin-top:10px">
+        <h3>Why split it like this?</h3>
+        <p>The bubble response is nonlinear and needs the incident pressure first; their echoes are tiny. So the transmit wave is simulated once per pulse (expensive, full-wave), and the bubbles are added on top as sources. In the default <b>hybrid</b> mode the echoes travel back with an analytical Green's function in a homogeneous medium (cheap); in <b>full</b> mode they are injected into k-Wave as mass sources (exact, slow).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="4 · Coupling acoustics and bubbles">
+  <div class="kicker">main_RF, step by step</div>
+  <h2>The code path of one RF simulation</h2>
+  <table class="t">
+    <tr><th style="width:26%">Stage</th><th>Function(s)</th><th>What it does</th></tr>
+    <tr><td>Setup</td><td><span class="fn">input_handling</span>, <span class="fn">sim_setup</span>, <span class="fn">check_ground_truth_data</span></td><td>load settings, paths, solver choice; check the ground truth matches the settings</td></tr>
+    <tr><td>Grid and medium</td><td><span class="fn">define_grid</span>, <code>kWaveGrid</code>, <span class="fn">define_medium</span></td><td>PROTEUS grid (with x, y, z axes) and the k-Wave grid; voxel maps</td></tr>
+    <tr><td>Transducer</td><td><span class="fn">get_transducer_integration_points</span>, <span class="fn">…_delays</span>, <span class="fn">compute_travel_times</span></td><td>points, lens delays, how long to record (to the domain boundary and back)</td></tr>
+    <tr><td>Pulse and sequence</td><td><span class="fn">preprocess_transmit</span></td><td>filter/resample the pulse to the grid rate; pulsing scheme → sequence (e.g. plus/minus for pulse inversion)</td></tr>
+    <tr><td>Sensors</td><td><span class="fn">define_sensor_MB_all</span>, <span class="fn">define_sensor_transducer</span></td><td>one mask covering all bubble positions of all frames (+ the transducer mask in hybrid mode)</td></tr>
+    <tr><td>① Transmit</td><td><span class="fn">define_source_transducer</span>, <span class="fn">run_simulation</span></td><td>one k-Wave run per pulse in the sequence; recorded once, reused for all frames</td></tr>
+    <tr><td>Per frame, per pulse</td><td><span class="fn">load_microbubbles</span>, <span class="fn">define_sensor_MB</span>, <span class="fn">extract_sensor_data</span></td><td>this frame's bubbles; pick their pressure from the recorded mask → <code>sensed_p</code> (Nbubbles × Nt)</td></tr>
+    <tr><td>②③ Bubbles and echoes</td><td><span class="fn">hybrid_simulator</span> or <span class="fn">full_simulator</span></td><td>bubble ODE → mass sources → (interactions) → pressure at the transducer</td></tr>
+    <tr><td>Receive</td><td><span class="fn">compute_RF_data</span> → <span class="fn">compute_RF</span></td><td>points → elements, receive impulse response; save <code>Frame_XX.mat</code> (RF, dt, bubbles)</td></tr>
+  </table>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="5 · Microbubbles">
+  <div class="kicker">Module 3 · microbubble-simulator</div>
+  <h2>A bubble is a nonlinear oscillator driven by the wave</h2>
+  <div class="cols wide-right">
+    <div class="card">
+      <h3>Rayleigh-Plesset with a shell</h3>
+      <div class="eq">ρ(R R̈ + 3/2 Ṙ²) = p<sub>g</sub>(R) − 2σ(R)/R − 4μṘ/R − 4κ<sub>s</sub>Ṙ/R² − P<sub>0</sub> − p<sub>inc</sub>(t)</div>
+      <ul>
+        <li><b>p<sub>g</sub></b>: polytropic gas pressure, with thermal damping (Prosperetti model)</li>
+        <li><b>σ(R)</b>: shell surface tension (Marmottant buckling/rupture, or the Segers tables)</li>
+        <li><b>κ<sub>s</sub></b>: shell viscosity; <b>μ</b>: liquid viscosity; plus radiation damping</li>
+      </ul>
+      <p class="small"><span class="fn">calcBubbleResponse</span> solves it for a batch of bubbles at once (<code>ode45</code> on <span class="fn">simple_RP</span>, nondimensional x = R/R<sub>0</sub> − 1), from the pressure each bubble sensed. <span class="fn">compute_bubble_mass_source</span> resamples to 250 MHz, runs the batches (optionally with <code>parfor</code>), and returns the <b>mass source</b> <code>q = 4πρR²Ṙ</code> filtered and resampled back to the k-Wave time step.</p>
+    </div>
+    <div>
+      <div class="controls"><label>R<sub>0</sub>: <span id="bR0" class="mono"></span></label><button id="bPlay">Pause</button><label>speed <input type="range" id="bSpeed" min="1" max="20" value="6"></label></div>
+      <canvas id="bubbleCanvas" width="760" height="380" aria-label="Bubble oscillation"></canvas>
+      <div class="card" style="margin:10px 0">
+        <h3>What bubble–bubble interaction changes</h3>
+        <p>Each bubble also feels the echoes of its neighbours, which shifts its response. A 2 µm bubble driven at 200 kPa radiates a peak of about 31 kPa at 20 µm, 6 kPa at 100 µm and 0.6 kPa at 1 mm (computed with PROTEUS). So it matters at high concentration and is negligible for sparse bubbles. <code>NumberOfInteractions</code> sets the iterations (default 0); each one repeats the ODE and the propagation for all bubbles. See the coupling slide, step ②.</p>
+      </div>
+      <p class="small">Interactive: the PROTEUS bubble model's response (R<sub>0</sub> = 2 µm) to the default pulse. The circle is drawn at the relative radius R/R<sub>0</sub> (dashed: rest size); the traces show p<sub>inc</sub> (grey) and R(t) (orange).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="5 · Microbubbles">
+  <div class="kicker">Microbubbles · what comes out</div>
+  <h2>Size matters: resonance and mass sources</h2>
+  <div class="cols wide-left">
+    <figure><img src="assets/bubble_response.png" alt="Bubble response"><figcaption>Same pulse, five sizes: the radius response (middle) and the mass source PROTEUS injects (bottom). The response keeps ringing after the pulse and contains harmonics: this is the nonlinear contrast signal.</figcaption></figure>
+    <div>
+      <figure><img src="assets/bubble_resonance.png" alt="Resonance curve"><figcaption>Radial excursion vs rest radius at 2.5 MHz, 200 kPa: bubbles near 1.4 µm resonate.</figcaption></figure>
+      <div class="note">Why a <b>mass</b> source: a pulsating sphere injects volume <code>dV/dt = 4πR²Ṙ</code>. In the acoustic equations that is a mass source <code>ρ·dV/dt</code>, a monopole whose far field is <code>p(r,t) = q̇(t − r/c)/(4πr)</code>.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="5 · Microbubbles">
+  <div class="kicker">Echoes back to the probe (hybrid mode)</div>
+  <h2>Green's function propagation with attenuation</h2>
+  <div class="cols wide-left">
+    <figure><img src="assets/green_propagation.png" alt="Propagation"><figcaption>calc_scatter_attenuated: the echo of a 2 µm bubble at 2, 10 and 30 mm (multiplied by r to remove 1/r spreading). It is delayed by r/c and loses high frequencies to the power-law attenuation.</figcaption></figure>
+    <div class="card">
+      <h3>From each bubble to each point of the transducer</h3>
+      <p><span class="fn">run_simulation_homogeneous</span> averages the medium (c, ρ, α, y) and, for every bubble–sensor pair, applies the analytical Green's function of a power-law absorbing medium in the frequency domain (<span class="fn">calc_scatter_attenuated</span>; Kelly et al. 2008, Szabo).</p>
+      <ul>
+        <li>Sensors = the transducer mask voxels; distances are snapped to a grid of step c·dt per source (<code>gridded</code>), which makes thousands of sensors cheap.</li>
+        <li>Memory is bounded by processing sensor chunks and source batches (<code>MaxArrayElements</code>).</li>
+        <li>A bubble never senses itself (zero distance → zero pressure).</li>
+      </ul>
+      <p class="small">This neglects the tissue heterogeneity on the way back (it is a small effect on weak, spherical echoes); the full mode keeps it by running k-Wave again with the mass sources.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="6 · Receive and RF data">
+  <div class="kicker">Receive · compute_RF</div>
+  <h2>From pressure on the grid to element signals</h2>
+  <div class="svgwrap">
+  <svg viewBox="0 0 1200 190" role="img" aria-label="Receive chain">
+    <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5d6670"/></marker></defs>
+    <g font-size="13">
+      <rect x="10" y="40" width="170" height="90" rx="10" fill="#e7f0f8" stroke="#2166ac"/><text x="95" y="72" text-anchor="middle" font-weight="700">p on mask voxels</text><text x="95" y="94" text-anchor="middle" fill="#5d6670">transmit (k-Wave)</text><text x="95" y="112" text-anchor="middle" fill="#5d6670">+ bubble echoes</text>
+      <rect x="215" y="40" width="160" height="90" rx="10" fill="#fff" stroke="#2166ac"/><text x="295" y="72" text-anchor="middle" font-weight="700">× W (sinc)</text><text x="295" y="94" text-anchor="middle" fill="#5d6670">p at every</text><text x="295" y="112" text-anchor="middle" fill="#5d6670">integration point</text>
+      <rect x="410" y="40" width="160" height="90" rx="10" fill="#fff" stroke="#2166ac"/><text x="490" y="72" text-anchor="middle" font-weight="700">lens delays</text><text x="490" y="94" text-anchor="middle" fill="#5d6670">phase shift per</text><text x="490" y="112" text-anchor="middle" fill="#5d6670">point (FFT)</text>
+      <rect x="605" y="40" width="170" height="90" rx="10" fill="#fff" stroke="#2166ac"/><text x="690" y="72" text-anchor="middle" font-weight="700">apodize, average</text><text x="690" y="94" text-anchor="middle" fill="#5d6670">over the points</text><text x="690" y="112" text-anchor="middle" fill="#5d6670">of each element</text>
+      <rect x="810" y="40" width="170" height="90" rx="10" fill="#fff" stroke="#2166ac"/><text x="895" y="72" text-anchor="middle" font-weight="700">* receive IR</text><text x="895" y="94" text-anchor="middle" fill="#5d6670">pressure → voltage</text><text x="895" y="112" text-anchor="middle" fill="#5d6670">(skip: RF_type pressure)</text>
+      <rect x="1015" y="40" width="170" height="90" rx="10" fill="#f0f1f2" stroke="#5d6670"/><text x="1100" y="72" text-anchor="middle" font-weight="700">RF</text><text x="1100" y="94" text-anchor="middle" fill="#5d6670">N<tspan baseline-shift="sub" font-size="9">el</tspan> × N<tspan baseline-shift="sub" font-size="9">t</tspan> per pulse</text><text x="1100" y="112" text-anchor="middle" fill="#5d6670">Frame_XX.mat</text>
+      <path d="M180 85 H213" stroke="#5d6670" stroke-width="2" marker-end="url(#ar5)"/><path d="M375 85 H408" stroke="#5d6670" stroke-width="2" marker-end="url(#ar5)"/><path d="M570 85 H603" stroke="#5d6670" stroke-width="2" marker-end="url(#ar5)"/><path d="M775 85 H808" stroke="#5d6670" stroke-width="2" marker-end="url(#ar5)"/><path d="M980 85 H1013" stroke="#5d6670" stroke-width="2" marker-end="url(#ar5)"/>
+      <text x="600" y="168" text-anchor="middle" fill="#5d6670">The same points and weights as in transmit: reciprocity of the element response (directivity, lens) comes for free.</text>
+    </g>
+  </svg>
+  </div>
+  <figure style="margin-top:12px"><img src="assets/rf_tiny.png" alt="RF from a tiny simulation"><figcaption>Real main_RF output from a tiny test run (8 elements, 6 bubbles, coarse grid): the transmit pulse seen by the elements themselves dominates; after it, the weaker echoes of the bubbles and the speckle.</figcaption></figure>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="6 · Receive and RF data">
+  <div class="kicker">Acquisition schemes</div>
+  <h2>Pulsing schemes isolate the nonlinear bubble signal</h2>
+  <div class="cols3">
+    <div class="card"><h3>Standard</h3><p>One pulse per frame. RF = tissue (linear) + bubbles.</p><p class="small">sequence = {pulse}</p></div>
+    <div class="card"><h3>Pulse inversion</h3><p>Send +p, then −p. Summed, the linear (tissue) echoes cancel; the bubbles' even harmonics remain.</p><p class="small">sequence = {plus, minus}; <span class="fn">define_source_transducer</span> negates the apodization</p></div>
+    <div class="card"><h3>Amplitude modulation</h3><p>Odd elements, even elements, then all: odd + even − all cancels linear echoes; nonlinear (amplitude-dependent) bubble echoes remain. Also combined with inversion.</p><p class="small">sequence = {odd, even, all} or {odd, even, minus}</p></div>
+  </div>
+  <div class="note">Each pulse of the sequence gets its own k-Wave transmit run (step ①) and its own bubble positions (bubbles move between pulses: <code>TimeBetweenPulses</code>). <span class="fn">load_RF_data</span> combines them when reconstructing.</div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="7 · Image reconstruction">
+  <div class="kicker">Module 4 · delay-and-sum</div>
+  <h2>From RF data to an image</h2>
+  <figure><img src="assets/das_point_scatterers.png" alt="DAS"></figure>
+  <div class="cols" style="margin-top:12px">
+    <div class="card"><p>For each pixel, delay-and-sum predicts when its echo reaches each element: transmit path (<span class="fn">das_transmit_distance</span>, the same model as the transmit delays) + return path to the element. It picks those samples from the RF data of every element and sums them. Summed in phase only at the true position, the hyperbolas of the RF data collapse into points.</p></div>
+    <div class="card"><p>All delays become one sparse matrix (<span class="fn">compute_das_matrix</span>, <span class="fn">compute_das_matrix_general</span>): image = M · RF, for every frame at once. Corrections: time to the peak of the two-way pulse, lens delay, k-Wave staggered grid. Then envelope (Hilbert), log compression, TGC. <span class="fn">write_video</span> makes the movie.</p></div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="8 · Map of the code">
+  <div class="kicker">Hands on</div>
+  <h2>Your first hour with PROTEUS</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>Install and check</h3>
+      <ol>
+        <li>Clone the code. Until v1.1 is released, these slides describe the <code>revamp</code> branch of <a href="https://github.com/theodore-michel/PROTEUS/tree/revamp">theodore-michel/PROTEUS</a>.</li>
+        <li>In MATLAB, at the repository root: <code>setup_proteus('InstallKWave', true)</code> reports what is missing and downloads k-Wave 1.4.1.</li>
+        <li><code>cd tests; runProteusTests(Tag="Fast")</code> runs the quick checks. Without the tag, it also runs small simulations (under a minute or two).</li>
+      </ol>
+      <h3 style="margin-top:12px">Simulate</h3>
+      <ol>
+        <li>Download the example flow data from <a href="https://zenodo.org/records/10573662">Zenodo</a> into <code>geometry_data</code>.</li>
+        <li><code>run MainGUI</code>: look through the panels, save the settings, then <b>Simulate pressure field</b>.</li>
+        <li>Generate the ground truth and run the RF simulation from the GUI, or from <code>example_scripts/example_simple.m</code>.</li>
+        <li>Reconstruct with <code>example_scripts/example_reconstruction.m</code>.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Good first explorations</h3>
+      <ul>
+        <li>Change the focus and angle in the Transmit panel; compare the pressure fields.</li>
+        <li>Switch P4-1 to C1-6D and look at the domain in the Geometry panel.</li>
+        <li>Plot <code>Frame_XX.mat</code>: bubble positions and <code>RF{1}</code>.</li>
+        <li>Try pulse inversion: which echoes disappear in the image?</li>
+      </ul>
+      <div class="note"><b>Expect long runs:</b> realistic 3-D simulations need a large grid and usually a GPU or the C++ solver. Start with few frames and few bubbles. The test helper <code>make_tiny_settings</code> shows settings that finish in seconds on a laptop.</div>
+      <p class="small">Conventions to remember: x depth, y lateral, z height. Paths go in <code>proteus_local_paths.m</code>, not in the code.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="slide" data-section="8 · Map of the code">
+  <div class="kicker">Reading the code</div>
+  <h2>Where to start reading</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>Entry points</h3>
+      <ul>
+        <li><code>MainGUI.mlapp</code> → panels in <code>GUIfunctions/*.mlapp</code></li>
+        <li><span class="fn">main_RF</span>(settings, groundtruth, savefolder) – RF data</li>
+        <li><span class="fn">main_pressure_field</span>(settings, savefolder) – transmit field maps</li>
+        <li><span class="fn">generate_streamlines</span> – ground truth</li>
+        <li><span class="fn">DAS_reconstruction</span> / <span class="fn">DAS_reconstruction_general</span></li>
+        <li><code>example_scripts/</code> – each of the above from a script</li>
+      </ul>
+      <h3 style="margin-top:12px">Infrastructure</h3>
+      <ul>
+        <li><span class="fn">path_setup</span>, <code>proteus_local_paths.m</code>, <span class="fn">setup_proteus</span> – paths, k-Wave 1.4.1 check</li>
+        <li><span class="fn">proteus_version</span> – 1.1.0</li>
+        <li><code>tests/</code> – <span class="fn">runProteusTests</span>; regression baselines of the original code</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Key functions by topic</h3>
+      <table class="t">
+        <tr><td>Geometry</td><td><span class="fn">get_element_geometry</span>, <span class="fn">compute_simulation_domain</span>, <span class="fn">define_grid</span></td></tr>
+        <tr><td>Medium</td><td><span class="fn">define_medium</span>, <span class="fn">random_truncated_normal</span>, <span class="fn">VOXELISE</span></td></tr>
+        <tr><td>Transducer</td><td><span class="fn">get_transducer_properties</span>, <span class="fn">load_transducer_model</span>, <span class="fn">get_transducer_integration_points</span></td></tr>
+        <tr><td>Grid mapping</td><td><span class="fn">voxelize_media_points</span>, <span class="fn">update_sensor_fast</span>, <span class="fn">evaluate_delta_function</span></td></tr>
+        <tr><td>Transmit</td><td><span class="fn">get_voltage_signal</span>, <span class="fn">get_pressure_signal</span>, <span class="fn">compute_delays</span>, <span class="fn">define_source_transducer</span></td></tr>
+        <tr><td>Solver</td><td><span class="fn">run_simulation</span> (k-Wave), <span class="fn">run_simulation_homogeneous</span></td></tr>
+        <tr><td>Bubbles</td><td><span class="fn">compute_bubble_mass_source</span>, <span class="fn">calcBubbleResponse</span>, <span class="fn">simple_RP</span></td></tr>
+        <tr><td>Receive</td><td><span class="fn">compute_RF</span>, <span class="fn">extract_sensor_data</span></td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Contents overlay -->
+<div id="toc" style="display:none;position:fixed;inset:46px 0 0 0;background:rgba(247,247,245,.98);z-index:20;overflow:auto;padding:30px 40px">
+  <h2>Contents</h2>
+  <ol class="toc" id="tocList"></ol>
+</div>
+
+<script>
+const DATA = __DATA__;
+
+// ---------- slide navigation ----------
+const slides = [...document.querySelectorAll('.slide')];
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length-1, i));
+  slides.forEach((s,k)=>s.classList.toggle('active', k===cur));
+  document.getElementById('counter').textContent = (cur+1)+' / '+slides.length;
+  document.getElementById('sectionName').textContent = slides[cur].dataset.section || '';
+  document.getElementById('progress').style.width = (100*(cur+1)/slides.length)+'%';
+  history.replaceState(null,'','#'+(cur+1));
+  slides[cur].querySelectorAll('video').forEach(v=>{ try{ v.play(); }catch(e){} });
+}
+document.getElementById('prev').onclick = ()=>show(cur-1);
+document.getElementById('next').onclick = ()=>show(cur+1);
+document.addEventListener('keydown', e=>{
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key==='ArrowRight' || e.key==='PageDown' || e.key===' ') { e.preventDefault(); show(cur+1); }
+  if (e.key==='ArrowLeft' || e.key==='PageUp') { e.preventDefault(); show(cur-1); }
+  if (e.key==='Escape') toc.style.display='none';
+});
+const toc = document.getElementById('toc');
+document.getElementById('tocBtn').onclick = ()=>{ toc.style.display = toc.style.display==='none'?'block':'none'; };
+const tocList = document.getElementById('tocList');
+slides.forEach((s,k)=>{
+  const h = s.querySelector('h1,h2'); const li = document.createElement('li');
+  const a = document.createElement('a'); a.href='#'+(k+1);
+  a.textContent = (s.dataset.section? s.dataset.section+' — ' : '') + (h? h.textContent : 'Slide '+(k+1));
+  a.onclick = e=>{ e.preventDefault(); show(k); toc.style.display='none'; };
+  li.appendChild(a); tocList.appendChild(li);
+});
+window.addEventListener('hashchange', ()=>{ const k = (parseInt(location.hash.slice(1))||1)-1; if (k !== cur) show(k); });
+show((parseInt(location.hash.slice(1))||1)-1);
+
+// ---------- wavefront from delays (Huygens) ----------
+(function(){
+  const cv = document.getElementById('wfCanvas'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height, c = 1.54;               // mm/us
+  const scale = 7;                                            // px per mm
+  const ox = W/2, oy = 40;                                    // origin (x=0, y=0)
+  let t0 = performance.now();
+  function elements(curved){
+    const N = curved? 64 : 48, pitch = curved? 0.95 : 0.6;
+    const R = 45, el = [];
+    for (let i=0;i<N;i++){
+      if (curved){
+        const th = pitch*(i-(N-1)/2)/R, thMax = N*pitch/(2*R);
+        el.push({y: R*Math.sin(th), x: -R*Math.cos(thMax) + R*Math.cos(th)});
+      } else el.push({y: pitch*(i-(N-1)/2), x: 0});
+    }
+    return {el, R, curved, N, pitch};
+  }
+  function delays(g, F, ang){
+    const a = ang*Math.PI/180; let d;
+    const inf = Math.abs(F) >= 80;
+    if (inf && !g.curved){ d = g.el.map(e=>e.y*Math.sin(a)/c); }
+    else {
+      let f = F;
+      if (inf && g.curved){ const thMax = g.N*g.pitch/(2*g.R); f = -g.R*Math.cos(thMax); }
+      const fx = f*Math.cos(a), fy = f*Math.sin(a);
+      d = g.el.map(e=>Math.hypot(e.x-fx, e.y-fy)/c);
+      if (f > 0) d = d.map(v=>-v);
+    }
+    const m = Math.min(...d); return d.map(v=>v-m);
+  }
+  function draw(){
+    const F = +document.getElementById('wfFocus').value, ang = +document.getElementById('wfAngle').value;
+    const curved = document.getElementById('wfCurved').checked;
+    document.getElementById('wfFocusV').textContent = Math.abs(F)>=80? '∞' : F+' mm';
+    document.getElementById('wfAngleV').textContent = ang+'°';
+    const g = elements(curved), d = delays(g, F, ang);
+    const t = ((performance.now()-t0)/1000)*12;               // us of simulated time
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+    // axes labels
+    ctx.fillStyle='#5d6670'; ctx.font='13px sans-serif';
+    ctx.fillText('y lateral →', W-110, 24); ctx.save(); ctx.translate(18, H-40); ctx.rotate(-Math.PI/2); ctx.fillText('x depth →', 0, 0); ctx.restore();
+    // wavelets
+    ctx.lineWidth = 1;
+    g.el.forEach((e,i)=>{
+      const r = (t - d[i])*c; if (r<=0) return;
+      ctx.strokeStyle = 'rgba(33,102,172,0.18)';
+      ctx.beginPath(); ctx.arc(ox+e.y*scale, oy+e.x*scale, r*scale, 0, Math.PI*2); ctx.stroke();
+    });
+    // coherent wavefront: where many wavelets coincide (constructive sum)
+    const N = g.el.length, step = 3, thick = 0.18;
+    for (let py=0; py<H; py+=step) for (let px=0; px<W; px+=step){
+      const x = (py-oy)/scale, y = (px-ox)/scale;
+      let n = 0;
+      for (let i=0;i<N;i++){
+        const r = (t - d[i])*c; if (r <= 0) continue;
+        if (Math.abs(Math.hypot(x-g.el[i].x, y-g.el[i].y) - r) < thick) n++;
+      }
+      if (n > 0.25*N){ ctx.fillStyle = 'rgba(192,57,43,'+Math.min(1, n/(0.6*N)).toFixed(2)+')'; ctx.fillRect(px,py,step,step); }
+    }
+    // focus marker
+    if (Math.abs(F)<80){ const a=ang*Math.PI/180; ctx.strokeStyle='#d95f02'; ctx.lineWidth=2;
+      const fx=ox+F*Math.sin(a)*scale, fy=oy+F*Math.cos(a)*scale; ctx.beginPath(); ctx.moveTo(fx-6,fy); ctx.lineTo(fx+6,fy); ctx.moveTo(fx,fy-6); ctx.lineTo(fx,fy+6); ctx.stroke(); }
+    // elements
+    ctx.fillStyle = '#1d2329';
+    g.el.forEach((e,i)=>{ const fired = t >= d[i]; ctx.fillStyle = fired? '#2166ac' : '#b8c0c8'; ctx.fillRect(ox+e.y*scale-2, oy+e.x*scale-3, 4, 6); });
+    ctx.fillStyle='#1d2329'; ctx.font='14px sans-serif'; ctx.fillText('t = '+t.toFixed(1)+' µs', 12, H-14);
+    if ((t - Math.max(...d))*c > 75) t0 = performance.now();
+    requestAnimationFrame(draw);
+  }
+  ['wfFocus','wfAngle','wfCurved'].forEach(id=>document.getElementById(id).addEventListener('input', ()=>{ t0 = performance.now(); }));
+  document.getElementById('wfPlay').onclick = ()=>{ t0 = performance.now(); };
+  requestAnimationFrame(draw);
+})();
+
+// ---------- bubble oscillation ----------
+(function(){
+  const cv = document.getElementById('bubbleCanvas'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const t = DATA.bubble.t, p = DATA.bubble.p, R = DATA.bubble.R, R0 = DATA.bubble.R0;
+  document.getElementById('bR0').textContent = R0.toFixed(1)+' µm';
+  const n = t.length; let k = 0, playing = true;
+  const pMax = Math.max(...p.map(Math.abs)), dRmax = Math.max(...R.map(r=>Math.abs(r-R0)));
+  document.getElementById('bPlay').onclick = e=>{ playing=!playing; e.target.textContent = playing?'Pause':'Play'; };
+  function draw(){
+    const spd = +document.getElementById('bSpeed').value;
+    if (playing){ k = (k + spd) % n; }
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+    // bubble
+    const cx = 130, cy = H/2, base = 70;
+    const rr = base*(1 + (R[k]-R0)/R0);
+    const grd = ctx.createRadialGradient(cx-rr/3, cy-rr/3, rr/6, cx, cy, rr);
+    grd.addColorStop(0,'#fde7d6'); grd.addColorStop(1,'#d95f02');
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle='#999'; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.arc(cx, cy, base, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#1d2329'; ctx.font='13px sans-serif'; ctx.fillText('R/R₀ = '+(R[k]/R0).toFixed(2), cx-40, H-20);
+    // traces
+    const x0 = 280, w = W - x0 - 20;
+    const X = i=> x0 + w*i/(n-1);
+    ctx.strokeStyle='#d9dde1'; ctx.beginPath(); ctx.moveTo(x0, H*0.3); ctx.lineTo(x0+w, H*0.3); ctx.moveTo(x0, H*0.72); ctx.lineTo(x0+w, H*0.72); ctx.stroke();
+    ctx.strokeStyle='#7f8c8d'; ctx.lineWidth=1.5; ctx.beginPath();
+    for (let i=0;i<n;i+=2){ const y = H*0.3 - (p[i]/pMax)*H*0.2; i? ctx.lineTo(X(i),y) : ctx.moveTo(X(i),y); } ctx.stroke();
+    ctx.strokeStyle='#d95f02'; ctx.beginPath();
+    for (let i=0;i<n;i+=2){ const y = H*0.72 - ((R[i]-R0)/dRmax)*H*0.2; i? ctx.lineTo(X(i),y) : ctx.moveTo(X(i),y); } ctx.stroke();
+    ctx.strokeStyle='#2166ac'; ctx.beginPath(); ctx.moveTo(X(k), 10); ctx.lineTo(X(k), H-10); ctx.stroke(); ctx.lineWidth=1;
+    ctx.fillStyle='#5d6670'; ctx.fillText('incident pressure p_inc(t)', x0, 22); ctx.fillText('radius R(t)', x0, H*0.47);
+    ctx.fillText('t = '+t[k].toFixed(2)+' µs', x0+w-90, H-12);
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+// ---------- bubbles on streamlines (slide: flow) ----------
+(function(){
+  const lines = [...document.querySelectorAll('#flowLines path')];
+  const dots = document.getElementById('flowDots'), NS = 'http://www.w3.org/2000/svg';
+  const speed = [0.8, 1.2, 1.15, 0.75], radii = [4, 6, 5, 3.5], cols = ['#2166ac','#d95f02','#7b4fa8','#c0392b'];
+  const movers = lines.map((p,i)=>{
+    const L = p.getTotalLength(), step = 62*speed[i];
+    for (let d = 20 + 13*i; d < L; d += step){
+      const q = p.getPointAtLength(d), c = document.createElementNS(NS,'circle');
+      c.setAttribute('cx',q.x); c.setAttribute('cy',q.y); c.setAttribute('r',radii[i]*0.65);
+      c.setAttribute('fill',cols[i]); c.setAttribute('opacity','.45'); dots.appendChild(c);
+    }
+    const m = document.createElementNS(NS,'circle'); m.setAttribute('r',radii[i]);
+    m.setAttribute('fill',cols[i]); m.setAttribute('stroke','#fff'); dots.appendChild(m);
+    return {p, L, m, s: 30*i, v: speed[i]};
+  });
+  function tick(){
+    movers.forEach(o=>{ o.s = (o.s + o.v) % o.L; const q = o.p.getPointAtLength(o.s); o.m.setAttribute('cx',q.x); o.m.setAttribute('cy',q.y); });
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ---------- coupling-loop stepper ----------
+(function(){
+  const desc = [
+    '<h3>① Transmit (k-Wave, once per pulse)</h3><p>The transducer source fires into the 3-D medium. k-Wave records the pressure on the sensor mask of <b>all</b> bubble positions of all frames (and on the transducer mask in hybrid mode, which gives the tissue echoes). Because the medium does not change between frames, this single run serves every frame.</p>',
+    '<h3>② Bubble–bubble interactions (optional, NumberOfInteractions)</h3><p>Each bubble is driven by the incident pressure plus the echoes of the others: the ODE is solved, the mass sources propagate to the other bubbles (Green\'s function in hybrid mode, k-Wave in full mode, minus the self-sensed pressure), and the sensed pressure is updated. Default: 0 iterations (bubbles only feel the transmit wave).</p>',
+    '<h3>③ Echoes to the transducer</h3><p>The final mass sources radiate to the transducer. Hybrid: <span class="fn">run_simulation_homogeneous</span> with distances gridded per source, added to the recorded tissue echoes. Full: k-Wave with the transducer source and the bubble mass sources, recorded on the transducer mask. Then <span class="fn">compute_RF</span>.</p>'
+  ];
+  let s = 1, all = false;
+  const steps = [...document.querySelectorAll('#loopSvg .step')];
+  function upd(){
+    steps.forEach(g=>g.classList.toggle('on', all || +g.dataset.step === s));
+    document.getElementById('loopLabel').textContent = all? 'all steps' : 'step '+s+' / 3';
+    document.getElementById('loopDesc').innerHTML = all? desc.join('') : desc[s-1];
+  }
+  document.getElementById('loopPrev').onclick = ()=>{ all=false; s = Math.max(1, s-1); upd(); };
+  document.getElementById('loopNext').onclick = ()=>{ all=false; s = Math.min(3, s+1); upd(); };
+  document.getElementById('loopAll').onclick = ()=>{ all=!all; upd(); };
+  upd();
+})();
+</script>
+</body>
+</html>
