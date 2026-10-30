@@ -135,7 +135,7 @@ At the bottom of the main window there are buttons to load and save simulation s
 
 **Note:** If your computer does not have a GPU with at least 8 GB of dedicated memory, we advise to prepare your settings and ground truth data locally, and run the simulation [from the command line](#running-the-simulation-from-the-command-line) on a remote system.
 
-**Note** If you are using the default settings and you click **Simulate RF data** or **Simulate pressure field** a computationally demanding simulation will start. If you only want to test the functionality of the code and are not interested in a physically realistic scenario, you can click **Load settings** and select the file `test_settings.mat`.
+**Note** If you are using the default settings and you click **Simulate RF data** or **Simulate pressure field** a computationally demanding simulation will start. If you only want to test the functionality of the code and are not interested in a physically realistic scenario, reduce the size of the simulation first: for example fewer microbubbles and frames, a small number of transducer elements, and fewer points per wavelength. See `tests/helpers/make_tiny_settings.m` for settings that finish in seconds.
 
 ## Running the simulation from the graphical user interface
 
