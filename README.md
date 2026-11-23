@@ -6,6 +6,8 @@ Contrast-enhanced ultrasound simulator for microbubbles in vascular flow
 
 Link to the article: https://ieeexplore.ieee.org/document/10597664
 
+> **Python version in development:** https://github.com/POF-ultrasound/pyproteus
+
 ## System requirements
 
 - MATLAB R2021a or later is required (the test suite and CI use R2025a), with the following toolboxes:
